@@ -69,7 +69,7 @@ func (o *OcservGroupRepository) GroupsLookup(ctx context.Context) ([]string, err
 
 func (o *OcservGroupRepository) GetByID(ctx context.Context, id string) (*models.OcservGroup, error) {
 	var ocservGroup models.OcservGroup
-	err := o.db.WithContext(ctx).Where("id = ?", id).Find(&ocservGroup).Error
+	err := o.db.WithContext(ctx).Where("id = ?", id).First(&ocservGroup).Error
 	if err != nil {
 		return nil, err
 	}

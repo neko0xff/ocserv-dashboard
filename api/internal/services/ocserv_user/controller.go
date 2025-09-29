@@ -7,6 +7,7 @@ import (
 	"github.com/mmtaee/ocserv-users-management/api/internal/repository"
 	"github.com/mmtaee/ocserv-users-management/api/pkg/request"
 	"github.com/mmtaee/ocserv-users-management/common/models"
+	"golang.org/x/sync/errgroup"
 	"log"
 	"net/http"
 	"slices"
@@ -335,7 +336,7 @@ func (ctl *Controller) DisconnectOcservUser(c echo.Context) error {
 // @Param 		 date_end query string false "date_end"
 // @Failure      400 {object} request.ErrorResponse
 // @Failure      401 {object} middlewares.Unauthorized
-// @Success      200  {object} []models.DailyTraffic
+// @Success      200  {object} StatisticsResponse
 // @Router       /ocserv/users/{uid}/statistics [get]
 func (ctl *Controller) StatisticsOcservUser(c echo.Context) error {
 	userID := c.Param("uid")
@@ -367,11 +368,40 @@ func (ctl *Controller) StatisticsOcservUser(c echo.Context) error {
 		endDate = &t
 	}
 
-	stats, err := ctl.ocservUserRepo.UserStatistics(c.Request().Context(), userID, startDate, endDate)
-	if err != nil {
+	ctx := c.Request().Context()
+	var (
+		stats *[]models.DailyTraffic
+		total repository.TotalBandwidths
+	)
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		s, err := ctl.ocservUserRepo.UserStatistics(ctx, userID, startDate, endDate)
+		if err != nil {
+			return err
+		}
+		stats = s
+		return nil
+	})
+
+	g.Go(func() error {
+		t, err := ctl.ocservUserRepo.TotalBandwidthUser(ctx, userID)
+		if err != nil {
+			return err
+		}
+		total = t
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
 		return ctl.request.BadRequest(c, err)
 	}
-	return c.JSON(http.StatusOK, stats)
+
+	return c.JSON(http.StatusOK, StatisticsResponse{
+		Statistics:      stats,
+		TotalBandwidths: total,
+	})
 }
 
 // Statistics 	 Ocserv Users Statistics
@@ -399,23 +429,22 @@ func (ctl *Controller) Statistics(c echo.Context) error {
 	}
 
 	var startDate, endDate *time.Time
-	log.Println("startDate: ", data.DateStart)
-	log.Println("endDate: ", data.DateEnd)
 
 	tStart, err := time.Parse("2006-01-02", data.DateStart)
 	if err != nil {
 		return ctl.request.BadRequest(c, fmt.Errorf("invalid date_start: %w", err))
 	}
-
-	log.Println("t startDate: ", tStart)
 	startDate = &tStart
 
 	tEnd, err := time.Parse("2006-01-02", data.DateEnd)
 	if err != nil {
 		return ctl.request.BadRequest(c, fmt.Errorf("invalid date_end: %w", err))
 	}
-	log.Println("t endDate: ", tEnd)
 	endDate = &tEnd
+
+	if tStart.After(*endDate) {
+		return ctl.request.BadRequest(c, errors.New("date start is after end"))
+	}
 
 	stats, err := ctl.ocservUserRepo.Statistics(c.Request().Context(), startDate, endDate)
 	if err != nil {

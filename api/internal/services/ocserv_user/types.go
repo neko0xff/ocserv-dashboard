@@ -1,6 +1,7 @@
 package ocserv_user
 
 import (
+	"github.com/mmtaee/ocserv-users-management/api/internal/repository"
 	"github.com/mmtaee/ocserv-users-management/api/pkg/request"
 	"github.com/mmtaee/ocserv-users-management/common/models"
 )
@@ -34,4 +35,9 @@ type OcservUsersResponse struct {
 type StatisticsData struct {
 	DateStart string `json:"date_start" query:"date_start" validate:"omitempty" example:"2025-1-31"`
 	DateEnd   string `json:"date_end" query:"date_end" validate:"omitempty" example:"2025-12-31"`
+}
+
+type StatisticsResponse struct {
+	Statistics      *[]models.DailyTraffic     `json:"statistics" validate:"required"`
+	TotalBandwidths repository.TotalBandwidths `json:"total_bandwidths" validate:"required"`
 }

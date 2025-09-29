@@ -117,7 +117,7 @@ func (ctl *Controller) Home(c echo.Context) error {
 
 	go func() {
 		defer wg.Done()
-		bandwidth, err := ctl.ocservUserRepo.TotalTBandwidth(ctx)
+		bandwidth, err := ctl.ocservUserRepo.TotalBandwidth(ctx)
 		if err != nil {
 			errs <- err
 			return

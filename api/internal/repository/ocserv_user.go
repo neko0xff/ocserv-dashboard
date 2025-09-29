@@ -40,7 +40,8 @@ type OcservUserRepositoryInterface interface {
 	Statistics(ctx context.Context, dateStart, dateEnd *time.Time) (*[]models.DailyTraffic, error)
 	TotalUsers(ctx context.Context) (int64, error)
 	TopBandwidthUser(ctx context.Context) (TopBandwidthUsers, error)
-	TotalTBandwidth(ctx context.Context) (TotalBandwidths, error)
+	TotalBandwidthUser(ctx context.Context, id string) (TotalBandwidths, error)
+	TotalBandwidth(ctx context.Context) (TotalBandwidths, error)
 }
 
 func NewtOcservUserRepository() *OcservUserRepository {
@@ -314,7 +315,22 @@ func (o *OcservUserRepository) TopBandwidthUser(ctx context.Context) (TopBandwid
 	return result, nil
 }
 
-func (o *OcservUserRepository) TotalTBandwidth(ctx context.Context) (TotalBandwidths, error) {
+func (o *OcservUserRepository) TotalBandwidthUser(ctx context.Context, id string) (TotalBandwidths, error) {
+	var total TotalBandwidths
+	err := o.db.WithContext(ctx).
+		Model(&models.OcservUserTrafficStatistics{}).
+		Where("oc_user_id = ? ", id).
+		Select(`
+        COALESCE(SUM(rx),0) / 1073741824.0 AS rx,
+        COALESCE(SUM(tx),0) / 1073741824.0 AS tx`).
+		Scan(&total).Error
+	if err != nil {
+		return total, err
+	}
+	return total, nil
+}
+
+func (o *OcservUserRepository) TotalBandwidth(ctx context.Context) (TotalBandwidths, error) {
 	var total TotalBandwidths
 	err := o.db.WithContext(ctx).
 		Model(&models.OcservUserTrafficStatistics{}).

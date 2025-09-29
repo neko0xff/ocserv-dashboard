@@ -527,6 +527,18 @@ definitions:
     required:
     - meta
     type: object
+  ocserv_user.StatisticsResponse:
+    properties:
+      statistics:
+        items:
+          $ref: '#/definitions/models.DailyTraffic'
+        type: array
+      total_bandwidths:
+        $ref: '#/definitions/repository.TotalBandwidths'
+    required:
+    - statistics
+    - total_bandwidths
+    type: object
   ocserv_user.UpdateOcservUserData:
     properties:
       config:
@@ -548,6 +560,7 @@ definitions:
       traffic_size:
         description: 10 GiB
         example: 10737418240
+        minimum: 0
         type: integer
       traffic_type:
         enum:
@@ -1355,9 +1368,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.DailyTraffic'
-            type: array
+            $ref: '#/definitions/ocserv_user.StatisticsResponse'
         "400":
           description: Bad Request
           schema:

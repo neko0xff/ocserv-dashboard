@@ -1001,10 +1001,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.DailyTraffic"
-                            }
+                            "$ref": "#/definitions/ocserv_user.StatisticsResponse"
                         }
                     },
                     "400": {
@@ -2453,6 +2450,24 @@ const docTemplate = `{
                 }
             }
         },
+        "ocserv_user.StatisticsResponse": {
+            "type": "object",
+            "required": [
+                "statistics",
+                "total_bandwidths"
+            ],
+            "properties": {
+                "statistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.DailyTraffic"
+                    }
+                },
+                "total_bandwidths": {
+                    "$ref": "#/definitions/repository.TotalBandwidths"
+                }
+            }
+        },
         "ocserv_user.UpdateOcservUserData": {
             "type": "object",
             "properties": {
@@ -2480,6 +2495,7 @@ const docTemplate = `{
                 "traffic_size": {
                     "description": "10 GiB",
                     "type": "integer",
+                    "minimum": 0,
                     "example": 10737418240
                 },
                 "traffic_type": {

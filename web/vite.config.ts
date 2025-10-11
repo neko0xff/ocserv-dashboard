@@ -1,11 +1,16 @@
-import {defineConfig} from 'vite'
-import vue from '@vitejs/plugin-vue'
-import {fileURLToPath, URL} from 'node:url'
+import { fileURLToPath, URL } from 'url';
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import vuetify from 'vite-plugin-vuetify';
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
     plugins: [
         vue(),
+        vuetify({
+            autoImport: true
+            //styles: "expose",
+        })
     ],
     resolve: {
         alias: {
@@ -14,25 +19,11 @@ export default defineConfig({
     },
     css: {
         preprocessorOptions: {
-            scss: {
-                additionalData: `@use "vuetify/settings" with ($theme: your-theme);`
-            }
+            scss: {}
         }
     },
-    build: {
-        outDir: 'dist',
-        rollupOptions: {
-            output: {
-                intro: 'const ENVIRONMENT = "production";',
-                manualChunks(id) {
-                    if (id.includes('node_modules')) {
-                        if (id.includes('vue')) return 'vendor_vue';
-                        if (id.includes('lodash')) return 'vendor_lodash';
-                        return 'vendor';
-                    }
-                    return null
-                }
-            }
-        }
+    optimizeDeps: {
+        exclude: ['vuetify'],
+        entries: ['./src/**/*.vue']
     }
-})
+});

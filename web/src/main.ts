@@ -1,44 +1,50 @@
-import {createApp} from 'vue'
-import App from './App.vue'
-import vuetify from "@/plugins/vuetify.ts";
-import i18n from "@/plugins/i18n.ts";
-import router from "@/plugins/router.ts";
-import {useConfigStore} from "@/stores/config.ts";
-import {createPinia} from "pinia";
-import {useUserStore} from "@/stores/user.ts";
-import {useServerStore} from "@/stores/server.ts";
+import '@/assets/scss/style.scss';
+import { createApp } from 'vue';
+import App from './App.vue';
+import { router } from './router';
+import vuetify from './plugins/vuetify';
+import PerfectScrollbar from 'vue3-perfect-scrollbar';
+import VueApexCharts from 'vue3-apexcharts';
+import i18n from '@/plugins/i18n';
 
+import { createPinia } from 'pinia';
+import { useConfigStore, useServerStore } from '@/stores/config';
+import { useProfileStore } from '@/stores/profile';
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(createPinia())
+const stopLoader = async () => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+        preloader.style.opacity = '0';
+        setTimeout(() => preloader.remove(), 500);
+    }
+};
 
-;(async () => {
-    const serverStore = useServerStore()
-    await serverStore.getServerInfo()
+app.use(createPinia());
+(async () => {
+    const serverStore = useServerStore();
+    await serverStore.getServerInfo();
 
-    const configStore = useConfigStore()
-    const setup = await configStore.getConfig()
+    const configStore = useConfigStore();
+    const setup = await configStore.getConfig();
 
-    app.use(vuetify)
-    app.use(i18n)
-    app.use(router)
+    app.use(vuetify);
+    app.use(i18n);
+    app.use(router);
+    app.use(PerfectScrollbar);
+    app.use(VueApexCharts as any);
 
     if (!setup) {
-        router.push({name: 'SetupPage'})
+        await router.push({ name: 'Setup' });
     } else {
-        if (localStorage.getItem("token")) {
-            const userStore = useUserStore()
-            await userStore.getProfile()
+        if (localStorage.getItem('token')) {
+            const profileStore = useProfileStore();
+            await profileStore.getProfile();
         }
     }
 
-    app.mount('#app')
+    await stopLoader();
 
-    const preloader = document.getElementById('preloader')
-    if (preloader) {
-        preloader.style.opacity = '0'
-        setTimeout(() => preloader.remove(), 500)
-    }
-})()
-
+    app.mount('#app');
+})();

@@ -1,31 +1,25 @@
-import {defineStore} from "pinia";
-import {OCCTLApi} from "@/api";
-
-
-interface ServerState {
-    Version: string
-    OcctlVersion: string
-}
-
+import { defineStore } from 'pinia';
+import { OCCTLApi } from '@/api';
+import type { ServerState } from '@/types/storeTypes/StoreConfigType';
 
 export const useServerStore = defineStore('server', {
     state: (): ServerState => ({
-        Version: "",
-        OcctlVersion: ""
+        Version: '',
+        OcctlVersion: ''
     }),
     actions: {
         async getServerInfo() {
-            const api = new OCCTLApi()
+            const api = new OCCTLApi();
             await api.occtlServerInfoGet().then((res) => {
                 if (res.data) {
-                    this.Version = res.data.version || ""
-                    this.OcctlVersion = (res.data.occtl_version || "").replace(/\n/g, '<br />')
+                    this.Version = res.data.version || '';
+                    this.OcctlVersion = (res.data.occtl_version || '').replace(/\n/g, '<br />');
                 }
-            })
+            });
         }
     },
     getters: {
         versionInfo: (state) => state.Version,
         occtlVersionInfo: (state) => state.OcctlVersion
     }
-})
+});

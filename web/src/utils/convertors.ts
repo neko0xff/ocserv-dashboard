@@ -1,10 +1,14 @@
-const bytesToGB = (bytes: number): string => {
-    return (bytes / (1024 ** 3)).toFixed(6); // returns GB as a string with 6 decimal places
-}
+import { ModelsOcservUserTrafficTypeEnum } from '@/api';
+import { useI18n } from 'vue-i18n';
+
+const bytesToGB = (bytes: number, fixture: number = 6): string => {
+    if (bytes === 0) return '0';
+    return (bytes / 1024 ** 3).toFixed(fixture); // returns GB as a string with 6 decimal places
+};
 
 const formatDateTime = (dateString: string | undefined, message: string | undefined): string => {
     if (!dateString) {
-        return message || ""
+        return message || '';
     }
     const date = new Date(dateString);
     const year = date.getFullYear();
@@ -14,21 +18,29 @@ const formatDateTime = (dateString: string | undefined, message: string | undefi
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
+};
 
-const formatDate = (dateString: string | undefined) => {
-    let dateTime = formatDateTime(dateString, "")
-    return dateTime.split(" ")[0]
-}
+const formatDate = (date: Date | string | null | undefined): string => {
+    if (!date) return '';
 
-const formatDateTimeWithRelative = (
-    dateString: string | undefined,
-    message: string | undefined
-): string => {
+    // If a string is passed, convert to Date
+    const d = typeof date === 'string' ? new Date(date) : date;
+
+    if (isNaN(d.getTime())) return ''; // invalid date
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+};
+
+const formatDateTimeWithRelative = (dateString: string | undefined, message: string | undefined): string => {
     if (!dateString) {
-        return message || "";
+        return message || '';
     }
 
+    const { t } = useI18n();
     const formatted = formatDateTime(dateString, message);
     const date = new Date(dateString);
     const now = new Date();
@@ -41,25 +53,25 @@ const formatDateTimeWithRelative = (
     const diffMonths = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    let relative = "";
+    let relative = '';
 
     if (diffDays === 0) {
-        relative = "Today";
+        relative = t('TODAY');
     } else if (diffDays === 1) {
-        relative = "Yesterday";
+        relative = t('YESTERDAY');
     } else if (diffDays === -1) {
-        relative = "Tomorrow";
+        relative = t('TOMORROW');
     } else if (Math.abs(diffYears) >= 1) {
         if (diffYears > 0) {
-            relative = `${diffYears} year${diffYears > 1 ? "s" : ""} ago`;
+            relative = `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
         } else {
-            relative = `in ${Math.abs(diffYears)} year${Math.abs(diffYears) > 1 ? "s" : ""}`;
+            relative = `in ${Math.abs(diffYears)} year${Math.abs(diffYears) > 1 ? 's' : ''}`;
         }
     } else if (Math.abs(diffMonths) >= 1) {
         if (diffMonths > 0) {
-            relative = `${diffMonths} month${diffMonths > 1 ? "s" : ""} ago`;
+            relative = `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
         } else {
-            relative = `in ${Math.abs(diffMonths)} month${Math.abs(diffMonths) > 1 ? "s" : ""}`;
+            relative = `in ${Math.abs(diffMonths)} month${Math.abs(diffMonths) > 1 ? 's' : ''}`;
         }
     } else {
         if (diffDays > 1) {
@@ -72,5 +84,41 @@ const formatDateTimeWithRelative = (
     return `${formatted} (${relative})`;
 };
 
+const trafficTypesTransformer = (item: ModelsOcservUserTrafficTypeEnum): string => {
+    const { t } = useI18n();
 
-export {bytesToGB, formatDateTime, formatDate, formatDateTimeWithRelative}
+    switch (item) {
+        case ModelsOcservUserTrafficTypeEnum.FREE:
+            return t('FREE');
+        case ModelsOcservUserTrafficTypeEnum.MONTHLY_TRANSMIT:
+            return t('MONTHLY_TRANSMIT');
+        case ModelsOcservUserTrafficTypeEnum.MONTHLY_RECEIVE:
+            return t('MONTHLY_RECEIVE');
+        case ModelsOcservUserTrafficTypeEnum.TOTALLY_RECEIVE:
+            return t('TOTALLY_RECEIVE');
+        case ModelsOcservUserTrafficTypeEnum.TOTALLY_TRANSMIT:
+            return t('TOTALLY_TRANSMIT');
+        default:
+            return item;
+    }
+};
+
+const numberToFixer = (n: number, fixture: number = 4) => {
+    if (n === 0) return 0;
+    return n.toFixed(fixture);
+};
+
+const toISODateString = (date: Date): string => {
+    date.setHours(0, 0, 0, 0); // reset to midnight
+    return date.toISOString().split('T')[0]; // keep only YYYY-MM-DD
+};
+
+export {
+    bytesToGB,
+    formatDateTime,
+    formatDate,
+    formatDateTimeWithRelative,
+    trafficTypesTransformer,
+    numberToFixer,
+    toISODateString
+};

@@ -1,4 +1,4 @@
-import {defineStore} from 'pinia';
+import { defineStore } from 'pinia';
 
 export const useLoadingStore = defineStore('loading', {
     state: () => ({
@@ -14,6 +14,5 @@ export const useLoadingStore = defineStore('loading', {
     },
     getters: {
         isLoading: (state) => state.loading
-    },
-
+    }
 });

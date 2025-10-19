@@ -46,7 +46,6 @@ ensure_root() {
         print_message error "❌ Error: sudo is not installed on this system."
         exit 1
     fi
-
 }
 
 # ===============================
@@ -237,10 +236,14 @@ check_go_version() {
 # ===============================
 get_ip() {
     print_message info "🔍 Detecting public IP ..."
+#    set -x
+
     local detected_ip
     detected_ip=$(curl -s --max-time 5 https://api.ipify.org || \
                   curl -s --max-time 5 https://ifconfig.me || \
                   curl -s --max-time 5 https://checkip.amazonaws.com)
+#    set +x
+    print_message info "Detected IP: $detected_ip"
 
     if [[ -n "$detected_ip" && "$detected_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         print_message highlight "✅ Detected public IP: ${detected_ip}"
@@ -323,24 +326,6 @@ get_envs(){
     [[ -n "$dns" ]] && OCSERV_DNS="$dns"
     print_message highlight "✅ Using ocserv DNS: ${OCSERV_DNS}"
     printf "\n"
-
-    # -----------------------
-    # Database configuration
-    # -----------------------
-#    read -rp "Enter PostgreSQL database name or leave blank to use default (${DB_NAME}): " db_name
-#    [[ -n "$db_name" ]] && DB_NAME="$db_name"
-#    print_message highlight "✅ Using DB_NAME: ${DB_NAME}"
-#    printf "\n"
-#
-#    read -rp "Enter PostgreSQL username or leave blank to use default (${DB_USERNAME}): " db_user
-#    [[ -n "$db_user" ]] && DB_USERNAME="$db_user"
-#    print_message highlight "✅ Using DB_USERNAME: ${DB_USERNAME}"
-#    printf "\n"
-#
-#    read -rp "Enter PostgreSQL password or leave blank to use default (${DB_PASSWORD}): " db_pass
-#    [[ -n "$db_pass" ]] && DB_PASSWORD="$db_pass"
-#    print_message highlight "✅ Using DB_PASSWORD: ${DB_PASSWORD}"
-#    printf "\n"
 }
 
 # ===============================
@@ -383,11 +368,11 @@ get_site_lang() {
 set_environment() {
     ENV_FILE=".env"
 
-    if [[ "$DEPLOY_METHOD" == "docker" ]]; then
-        DB_HOST=db
-    else
-        DB_HOST=127.0.0.1
-    fi
+#    if [[ "$DEPLOY_METHOD" == "docker" ]]; then
+#        DB_HOST=db
+#    else
+#        DB_HOST=127.0.0.1
+#    fi
 
 
     print_message info "Creating environment file at $ENV_FILE ..."
@@ -405,10 +390,6 @@ SSL_EXPIRE=${SSL_EXPIRE}
 OCSERV_PORT=${OCSERV_PORT}
 OCSERV_DNS=${OCSERV_DNS}
 LANGUAGES="${LANGUAGES}"
-#DB_NAME=${DB_NAME}
-#DB_USERNAME=${DB_USERNAME}
-#DB_PASSWORD=${DB_PASSWORD}
-#DB_HOST=${DB_HOST}
 EOL
 
     print_message success "✅ Environment file created successfully."
@@ -426,12 +407,6 @@ EOL
     print_message highlight "   OCSERV_PORT  = ${OCSERV_PORT}"
     print_message highlight "   OCSERV_DNS   = ${OCSERV_DNS}"
     print_message highlight "   LANGUAGES    = ${LANGUAGES}"
-#    print_message highlight "   DB_NAME      = ${DB_NAME}"
-#    print_message highlight "   DB_HOST      = ${DB_HOST}"
-#    print_message highlight "   DB_USERNAME  = ${DB_USERNAME}"
-#    print_message highlight "   DB_PASSWORD  = ${DB_PASSWORD:0:2}..."
-
-
     printf "\n"
 }
 
@@ -558,11 +533,11 @@ main() {
     # Ensure script is running as root or sudo
     ensure_root "$@"
 
-    # install curl
-    sudo apt install -y curl
-
     # Deployment choice: docker or systemd
     choose_deployment
+
+    # install curl
+    sudo apt install -y curl
 
     # Check prerequisites based on deployment method
     if [[ "$DEPLOY_METHOD" == "docker" ]]; then

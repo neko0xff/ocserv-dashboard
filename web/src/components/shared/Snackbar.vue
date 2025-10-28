@@ -23,9 +23,9 @@ watch(
 
 const getStyle = (index: number): CSSProperties => {
     return {
-        bottom: `${16 + index * 60}px`,
-        right: '16px',
-        position: 'absolute'
+        position: 'fixed',
+        right: '1rem',
+        bottom: `${2 + index * 6}vh`
     };
 };
 </script>

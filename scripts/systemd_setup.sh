@@ -74,8 +74,8 @@ log "Detected OS: $OS, ARCH: $ARCH"
 # Base packages / tools
 # -----------------------
 log "Installing base packages..."
-sudo apt-get update -y
-sudo apt-get install -y gcc curl openssl ca-certificates jq less
+sudo apt update -y
+sudo apt install -y gcc curl openssl ca-certificates jq less
 
 ## Go toolchain (if missing)
 #if ! command -v go >/dev/null 2>&1; then

@@ -28,11 +28,6 @@ JWT_SECRET=$(openssl rand -hex 32)      # JWT signing secret (32 hex chars)
 SSL_C=US
 SSL_ST=CA
 SSL_L=SanFrancisco
-DB_NAME=ocserv
-DB_USERNAME=ocserv
-DB_PASSWORD=ocserv-passwd
-DB_HOST=db
-
 
 # ===============================
 # Functions
@@ -390,23 +385,25 @@ SSL_EXPIRE=${SSL_EXPIRE}
 OCSERV_PORT=${OCSERV_PORT}
 OCSERV_DNS=${OCSERV_DNS}
 LANGUAGES="${LANGUAGES}"
+ALLOW_ORIGINS=https://${HOST}:3443
 EOL
 
     print_message success "✅ Environment file created successfully."
     print_message info "🔧 Environments written to .env:"
-    print_message highlight "   HOST         = ${HOST}"
-    print_message highlight "   SECRET_KEY   = ${SECRET_KEY:0:8}..."
-    print_message highlight "   JWT_SECRET   = ${JWT_SECRET:0:8}..."
-    print_message highlight "   SSL_CN       = ${SSL_CN}"
-    print_message highlight "   SSL_ORG      = ${SSL_ORG}"
-    print_message highlight "   SSL_C        = ${SSL_C}"
-    print_message highlight "   SSL_ST       = ${SSL_ST}"
-    print_message highlight "   SSL_L        = ${SSL_L}"
-    print_message highlight "   OC_NET       = ${OC_NET}"
-    print_message highlight "   SSL_EXPIRE   = ${SSL_EXPIRE}"
-    print_message highlight "   OCSERV_PORT  = ${OCSERV_PORT}"
-    print_message highlight "   OCSERV_DNS   = ${OCSERV_DNS}"
-    print_message highlight "   LANGUAGES    = ${LANGUAGES}"
+    print_message highlight "   HOST             = ${HOST}"
+    print_message highlight "   SECRET_KEY       = ${SECRET_KEY:0:8}..."
+    print_message highlight "   JWT_SECRET       = ${JWT_SECRET:0:8}..."
+    print_message highlight "   SSL_CN           = ${SSL_CN}"
+    print_message highlight "   SSL_ORG          = ${SSL_ORG}"
+    print_message highlight "   SSL_C            = ${SSL_C}"
+    print_message highlight "   SSL_ST           = ${SSL_ST}"
+    print_message highlight "   SSL_L            = ${SSL_L}"
+    print_message highlight "   OC_NET           = ${OC_NET}"
+    print_message highlight "   SSL_EXPIRE       = ${SSL_EXPIRE}"
+    print_message highlight "   OCSERV_PORT      = ${OCSERV_PORT}"
+    print_message highlight "   OCSERV_DNS       = ${OCSERV_DNS}"
+    print_message highlight "   LANGUAGES        = ${LANGUAGES}"
+    print_message highlight "   ALLOW_ORIGINS    = https://${HOST}:3443"
     printf "\n"
 }
 

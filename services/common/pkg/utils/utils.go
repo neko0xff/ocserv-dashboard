@@ -59,6 +59,10 @@ func ConfigWriter(file *os.File, config map[string]interface{}) error {
 			continue
 		}
 
+		if v == "" {
+			continue
+		}
+		
 		if k == "dns" {
 			for _, dns := range v.([]interface{}) {
 				if _, err := file.WriteString(fmt.Sprintf("dns=%s\n", dns)); err != nil {

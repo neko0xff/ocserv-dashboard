@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/mmtaee/ocserv-users-management/api/pkg/request"
 	"github.com/mmtaee/ocserv-users-management/common/models"
+	"github.com/mmtaee/ocserv-users-management/common/ocserv/occtl"
 	"github.com/mmtaee/ocserv-users-management/common/ocserv/user"
 	"github.com/mmtaee/ocserv-users-management/common/pkg/database"
 	"gorm.io/gorm"
@@ -22,8 +23,9 @@ type TotalBandwidths struct {
 }
 
 type OcservUserRepository struct {
-	db                   *gorm.DB
-	commonOcservUserRepo user.OcservUserInterface
+	db                    *gorm.DB
+	commonOcservUserRepo  user.OcservUserInterface
+	commonOcservOcctlRepo occtl.OcservOcctlInterface
 }
 
 type OcservUserRepositoryInterface interface {
@@ -49,8 +51,9 @@ type OcservUserRepositoryInterface interface {
 
 func NewtOcservUserRepository() *OcservUserRepository {
 	return &OcservUserRepository{
-		db:                   database.GetConnection(),
-		commonOcservUserRepo: user.NewOcservUser(),
+		db:                    database.GetConnection(),
+		commonOcservUserRepo:  user.NewOcservUser(),
+		commonOcservOcctlRepo: occtl.NewOcservOcctl(),
 	}
 }
 
@@ -93,6 +96,13 @@ func (o *OcservUserRepository) Create(ctx context.Context, ocservUser *models.Oc
 	if err != nil {
 		return nil, err
 	}
+
+	if ocservUser.Config != nil {
+		go func() {
+			_, _ = o.commonOcservOcctlRepo.ReloadConfigs()
+		}()
+	}
+
 	return ocservUser, err
 }
 
@@ -127,6 +137,13 @@ func (o *OcservUserRepository) Update(ctx context.Context, ocservUser *models.Oc
 	if err != nil {
 		return nil, err
 	}
+
+	if ocservUser.Config != nil {
+		go func() {
+			_, _ = o.commonOcservOcctlRepo.ReloadConfigs()
+		}()
+	}
+
 	return ocservUser, nil
 }
 
@@ -192,6 +209,11 @@ func (o *OcservUserRepository) Delete(ctx context.Context, uid string) error {
 		}
 		return nil
 	})
+
+	go func() {
+		_, _ = o.commonOcservOcctlRepo.ReloadConfigs()
+	}()
+
 	return err
 }
 
@@ -233,6 +255,10 @@ func (o *OcservUserRepository) UpdateUsersByDeleteGroup(ctx context.Context, gro
 
 		return nil
 	})
+
+	go func() {
+		_, _ = o.commonOcservOcctlRepo.ReloadConfigs()
+	}()
 
 	return &users, err
 }

@@ -90,11 +90,13 @@ func (o *OcservOcctl) DisconnectUser(username string) (string, error) {
 // ReloadConfigs reloads the ocserv configuration.
 // Executes: occtl reload
 func (o *OcservOcctl) ReloadConfigs() (string, error) {
+	log.Println("reloading service in progres ....")
 	cmd := exec.Command(occtlExec, "reload")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", err
 	}
+	log.Println(string(out))
 	return string(out), nil
 }
 

@@ -24,6 +24,9 @@ func Init(debug bool, host string, port int) {
 	}
 
 	allowOrigins := os.Getenv("ALLOW_ORIGINS")
+	if allowOrigins == "" {
+		log.Println("Warning: ALLOW_ORIGINS environment variable not set")
+	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {

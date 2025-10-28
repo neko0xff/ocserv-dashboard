@@ -47,7 +47,7 @@ onMounted(() => {
 <template>
     <v-row>
         <v-col cols="12" md="12">
-            <UiParentCard :title="t('OCSERV_GROUP_DEFAULTS')">
+            <UiParentCard :title="t('GROUP_DEFAULTS')">
                 <UiChildCard class="px-3">
                     <OcservGroupForm
                         :btnText="t('UPDATE')"

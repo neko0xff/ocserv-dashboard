@@ -1,13 +1,13 @@
 # OpenConnect VPN Server (Ocserv) with Web Admin Dashboard
 
-A simple, efficient, and scalable solution to deploy and manage an **OpenConnect VPN server (ocserv)** with a powerful **web-based admin dashboard**.  
+A simple, efficient, and scalable solution to deploy and manage an **OpenConnect VPN server (ocserv)** 
+with a powerful **web-based admin dashboard**.  
 Easily manage users, groups, and server configurations while keeping your VPN secure and performant.
 
 <p align="center">
   <img alt="GitHub stars" src="https://img.shields.io/github/stars/mmtaee/ocserv-users-management">
   <img alt="GitHub forks" src="https://img.shields.io/github/forks/mmtaee/ocserv-users-management">
   <img alt="GitHub issues" src="https://img.shields.io/github/issues/mmtaee/ocserv-users-management">
-  <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/mmtaee/ocserv-users-management">
   <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/mmtaee/ocserv-users-management">
   <img alt="Repo size" src="https://img.shields.io/github/repo-size/mmtaee/ocserv-users-management">
 </p>
@@ -22,27 +22,30 @@ Easily manage users, groups, and server configurations while keeping your VPN se
 
 ## 🌟 Key Features
 
-### 1. User Management
+### 1. Ocserv User Management
 - Create, update, remove, block, and disconnect users.
 - Set traffic usage limits (e.g., GB or monthly usage).
 
-### 2. Group Management
+### 2. Ocserv Group Management
 - Create, update, and delete user groups.
 - Organize users into logical groups for easier management.
 
-### 3. Command-Line Tools
+### 3. Ocserv Command-Line Tools
 - Use the `occtl` CLI utility to perform various server operations efficiently.
 
-### 4. Statistics & Monitoring
+### 4. Ocserv User Statistics & Monitoring
 - View real-time statistics for user traffic (RX/TX).
 - Track data usage per user and per group.
 
-### 5. Live Server Logs
+### 5. Ocserv Live Server Logs
 - Monitor Ocserv logs in real-time directly from the web dashboard.
 
-### 6. Staff Management
+### 6. Staffs and Staff Management
 - Manage admin accounts: create, update, delete, and reset passwords.
 - Track staff activities and administrative actions for accountability.
+- Each staff member can create and manage **their own Ocserv Users and Groups**. 
+  Staff members cannot view or modify users/groups created by others;  
+  only admin users have full access.
 
 ### 7. Customer Account Details & Usage
 - View detailed customer account information.
@@ -55,6 +58,14 @@ Easily manage users, groups, and server configurations while keeping your VPN se
   - Chinese (**zh**)
   - Arabic (**ar**)
   - Persian (**fa**)
+
+---
+
+## ⚠️ Legacy Version Note
+
+- **Branch name:** `legacy`
+- **Old version:** Developed using **Python backend** with **Vue 2 frontend**.
+- **Features:** Minimal, limited functionality compared to the current version — only basic user and group management existed.
 
 ---
 

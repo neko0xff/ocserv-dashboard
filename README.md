@@ -126,6 +126,15 @@ then select an option to continue:
 - If you encounter any issues, please refer to the documentation or contact support.
 
 ---
+
+## 🧭 Roadmap / TODO
+
+The planned features and upcoming improvements are tracked in the **[TODO.md](TODO.md)** file.
+
+Check it out to see what's coming next!
+
+---
+
 ## 📦 License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.

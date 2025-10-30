@@ -1,211 +1,136 @@
+# OpenConnect VPN Server (Ocserv) with Dashboard
 
-# OpenConnect VPN Server (ocserv) with Web Panel
+A simple, efficient, and scalable solution to deploy and manage an **OpenConnect VPN server (ocserv)**
+with a powerful **web-based dashboard**.  
+Easily manage users, groups, and server configurations while keeping your VPN secure and performant.
 
-This guide provides a simple and efficient way to set up and manage an OpenConnect VPN server (ocserv) with a powerful web panel for managing users and user groups. This solution offers an easy-to-deploy, scalable, and secure VPN setup with minimal configuration.
-
----
-<br />
-
-<p>
-<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/mmtaee/ocserv-users-management"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/mmtaee/ocserv-users-management"> 
+<p align="center">
+  <img alt="Project Logo" src="docs/logo.png" width="800"/>
 </p>
- 
 
-## Key Features
+<p align="center">
+  <img alt="GitHub stars" src="https://img.shields.io/github/stars/mmtaee/ocserv-users-management">
+  <img alt="GitHub forks" src="https://img.shields.io/github/forks/mmtaee/ocserv-users-management">
+  <img alt="GitHub issues" src="https://img.shields.io/github/issues/mmtaee/ocserv-users-management">
+  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/mmtaee/ocserv-users-management">
+  <img alt="Repo size" src="https://img.shields.io/github/repo-size/mmtaee/ocserv-users-management">
+</p>
 
-1. **User Management**:
-   - Create, update, edit, remove, block, and disconnect users.
-   - Set traffic usage limits (e.g., GB or monthly usage).
-  
-2. **Group Management**:
-   - Create, update, and remove user groups.
-  
-3. **Command Line Tools**:
-   - `occtl` command-line utility for various server operations.
-  
-4. **Statistics**:
-   - View statistics on user traffic (RX and TX).
-  
-5. **Usage Calculation**:
-   - Track data usage per user.
+<p align="center">
+  <img alt="Dashboard Home Page Preview" src="docs/home.png" width="800"/>
+  <br>
+  <i>Dashboard UI Preview</i>
+</p>
 
 ---
 
-⚠️ System Requirements
+## 🌟 Key Features
 
-    Note: Scripts are compatible only with systemd-based systems.
-    Tested and officially supported on Ubuntu 20.04.
+### 1. Ocserv User Management
+- Create, update, remove, block, and disconnect users.
+- Set traffic usage limits (e.g., GB or monthly usage).
+
+### 2. Ocserv Group Management
+- Create, update, and delete user groups.
+- Organize users into logical groups for easier management.
+
+### 3. Ocserv Command-Line Tools
+- Use the `occtl` CLI utility to perform various server operations efficiently.
+
+### 4. Ocserv User Statistics & Monitoring
+- View real-time statistics for user traffic (RX/TX).
+- Track data usage per user and per group.
+
+### 5. Ocserv Live Server Logs
+- Monitor Ocserv logs in real-time directly from the web dashboard.
+
+### 6. Staffs and Staff Management
+- Manage admin accounts: create, update, delete, and reset passwords.
+- Track staff activities and administrative actions for accountability.
+- Each staff member can create and manage **their own Ocserv Users and Groups**. 
+  Staff members cannot view or modify users/groups created by others;  
+  only admin users have full access.
+
+### 7. Customer Account Details & Usage
+- View detailed customer account information.
+- Monitor user-specific usage summaries and traffic data.
+
+### 8. Internationalization (i18n)
+- Multi-language support:
+  - English (**en**)
+  - Russian (**ru**)
+  - Chinese (**zh**)
+  - Arabic (**ar**)
+  - Persian (**fa**)
 
 ---
 
-## Installation Methods
+## ⚠️ Legacy Version Note
 
-You can install the solution using one of the following methods:
+- **Branch name:** [legacy](https://github.com/mmtaee/ocserv-users-management/tree/legacy)
+- **Old version:** Developed using **Python backend** with **Vue 2 frontend**.
+- **Features:** Minimal, limited functionality compared to the current version — only basic user and group management existed.
 
-### 1. **Using the `install.sh` Script**
+---
 
+## ⚙️ System Requirements
+
+- **Docker-based:**
+  - [Docker v28.5 or higher](https://docs.docker.com/engine/install/)
+  - [Docker Compose v2.40 or higher](https://docs.docker.com/compose/install/)
+
+- **Systemd-based:**
+  - **Supported Operating Systems:**
+    - [Debian 12 or higher](https://www.debian.org/download)
+    - [Ubuntu 20.04 or higher](https://ubuntu.com/download/server)
+
+  - **Programming Language:**
+    - [Golang v1.25 or higher](https://go.dev/dl/)
+
+---
+
+## 🚀 Quick Start
+
+1. Clone the repository:
 ```bash
+git clone https://github.com/mmtaee/ocserv-dashboard.git
+
+cd ocserv-dashboard
+
 chmod +x install.sh
+
 ./install.sh
 ```
-
-### 2. **Installing the Panel Without Script**
-
-```bash
-chmod +x ./configs/panel.sh
-HOST=http://YOUR_DOMAIN_OR_IP ./configs/panel.sh
-```
-
-### 3. **Docker Host Setup**
-
-1. Create the `prod.env` file:
-
-```bash
-touch prod.env
-```
-
-2. Add the following configuration to the `prod.env` file:
-
-```bash
-cat << EOF >> prod.env
-ORG=End-way
-EXPIRE=3650
-CN=End-way-Cisco-VPN
-OC_NET=172.16.24.0/24
-
-# Replace with your domain or IP
-CORS_ALLOWED=http://HOST_IP_OR_DOMAIN,https://HOST_IP_OR_DOMAIN
-HOST=HOST_IP_OR_DOMAIN
-DOMAIN=
-PORT=20443
-EOF
-```
-
-3. Run the Docker Compose command:
-
-```bash
-docker compose up -d --build
-```
-
-### 4. **Frontend Development Mode**
-
-```bash
-docker compose -f docker-compose.dev.yml up --build
-```
+then select an option to continue:
+<p>
+  <img alt="Installation Menu" src="docs/menu.png" width="800"/>
+</p>
 
 ---
 
-## Creating an Admin User
+## 🌐 Access the Admin Dashboard
 
-- **Docker Mode (In Container)**:
-
-```bash
-python3 /app/manage.py createadmin -u USERNAME -p PASSWORD
-```
-
-- **System Mode**:
-
-```bash
-/var/www/site/back-end/venv/bin/python3 /var/www/site/back-end/manage.py createadmin -u USERNAME -p PASSWORD
-```
+1. **Open your web browser**.
+2. **Navigate to** `https://YOUR-DOMAIN-OR-IP:3443` in the browser.
+3. **Complete the administrative setup wizard**.
+4. **Start managing users, groups, and VPN settings from the dashboard**.
 
 ---
 
-## Admin Panel Configuration
+## 🔒 Security & Scalability
 
-1. **Launch Web Browser**.
-2. **Navigate to** `http://YOUR-DOMAIN-OR-IP` in the browser.
-3. **Complete the administrative setup**.
-
----
-
-## Migrating Accounts from the Old Panel to New Panel
-
-### Migration Commands
-
-1. **For users with free traffic**:
-   
-   ```bash
-   --free-traffic
-   ```
-
-2. **Path to the old SQLite database**:
-   - **For OS**:
-
-   ```bash
-   mv /tmp/db.sqlite3 /tmp/db-old.sqlite3
-   /var/www/site/back-end/venv/bin/python3 manage.py migrate_to_new --old-path /tmp/db-old.sqlite3
-   ```
-
-   - **For Docker Host**:
-   
-   ```bash
-   mv db.sqlite3 db-old.sqlite3
-   cp db-old.sqlite3 volumes/db
-   python3 /app/manage.py migrate_to_new --old-path /app/db/db-old.sqlite3
-   ```
-
----
-
-## Developer Mode
-
-1. **Create a `dev.env` file**:
-
-```bash
-touch dev.env
-```
-
-2. **Add the following configuration to `dev.env`**:
-
-```bash
-cat << EOF >> dev.env
-DEBUG=True
-ORG=End-way
-EXPIRE=3650
-CN=End-way-Cisco-VPN
-OC_NET=172.16.24.0/24
-
-# Change to your domain or IP
-CORS_ALLOWED=http://127.0.0.1:9000
-
-# Change to your domain or IP
-HOST=127.0.0.1
-DOMAIN=
-PORT=20443
-EOF
-```
-
-3. **Run the Backend Service**:
-
-```bash
-docker compose -f docker-compose.dev.yml up -d --build
-```
-
-4. **Run the Frontend Service**:
-
-```bash
-cd front-end
-npm install && npm run serve
-```
-
-5. **Swagger API Documentation**:
-
-Navigate to `http://127.0.0.1:8000/doc/` to access the Swagger documentation.
-
----
-
-## Additional Notes
-
-- The OpenConnect VPN server (ocserv) is configured with best practices for security.
-- The web panel is designed to be easy to use for both admins and end users.
+- Designed with **best practices for security** to ensure a safe and reliable VPN environment.
+- The web panel is intuitive and easy to use for both administrators and end users.
+- Scalable architecture allows efficient management of multiple users and groups.
+- Real-time usage tracking and monitoring built-in.
 - If you encounter any issues, please refer to the documentation or contact support.
 
 ---
+## 📦 License
 
-By following the above steps, you can easily set up and manage your OpenConnect VPN server and provide users with secure, scalable VPN access.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-
-## Star History
+---
+## 📈 Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=mmtaee/ocserv-users-management&type=Date)](https://www.star-history.com/#mmtaee/ocserv-users-management&Date)
- 

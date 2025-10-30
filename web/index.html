@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180" />
+        <link href="/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png" />
+        <link href="/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png" />
+        <link href="/site.webmanifest" rel="manifest" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <title>Ocserv Dashboard</title>
+
+        <style id="preloader-style">
+            #preloader {
+                margin: 0;
+            }
+
+            #preloader .loader-container {
+                height: 100vh;
+                width: 100vw;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-family: 'Plus Jakarta Sans', sans-serif;
+            }
+
+            #preloader .loader {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            #preloader .loader img {
+                width: 450px;
+                border-radius: 100px;
+            }
+
+            #preloader .loader-text {
+                font-size: 16px;
+                color: black;
+                margin-top: 10px;
+                display: inline-flex;
+                gap: 2px;
+                letter-spacing: 5px;
+            }
+
+            #preloader .loader-text span {
+                display: inline-block;
+                transition:
+                    transform 0.25s ease,
+                    color 0.25s ease;
+            }
+
+            #preloader .loader-text span.active {
+                transform: translateY(-8px);
+                color: #1a73e8;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="preloader">
+            <div class="loader-container">
+                <div class="loader">
+                    <img alt="Logo" src="/logo-square.png" />
+                    <span id="loaderText" class="loader-text">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript" id="preloader-script">
+            const loaderText = document.getElementById('loaderText');
+            const text = loaderText.textContent.split('');
+            loaderText.textContent = '';
+
+            text.forEach((char) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                loaderText.appendChild(span);
+            });
+
+            const spans = loaderText.querySelectorAll('span');
+            let index = 0;
+
+            function animateNext() {
+                spans.forEach((s) => s.classList.remove('active'));
+                spans[index].classList.add('active');
+                setTimeout(() => {
+                    spans[index].classList.remove('active');
+                    index = (index + 1) % spans.length; // next character or loop
+                    animateNext();
+                }, 300);
+            }
+            animateNext();
+        </script>
+
+        <div id="app"></div>
+
+        <script src="/src/main.ts" type="module"></script>
+    </body>
+</html>

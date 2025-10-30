@@ -1,0 +1,67 @@
+# -----------------------------
+# Builder Stage
+# -----------------------------
+FROM golang:1.25.0 AS builder
+
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+ENV GOARCH=amd64
+
+RUN mkdir /common
+
+COPY services/common /common
+
+WORKDIR /app
+
+# Copy Go modules first for caching
+COPY services/api/go.mod services/api/go.sum ./
+
+RUN go mod download
+
+# Copy source code and build
+COPY services/api .
+
+RUN go build -ldflags="-s -w" -o api main.go
+
+# -----------------------------
+# Final Stage
+# -----------------------------
+FROM debian:trixie-slim
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        sudo \
+        ocserv \
+        ca-certificates \
+        procps \
+        gnutls-bin \
+        iptables \
+        openssl \
+        less \
+        dnsutils \
+        jq \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy API binary and scripts
+COPY --from=builder /app/api /usr/local/bin/api
+COPY scripts/ocserv_entrypoint.sh /entrypoint.sh
+COPY scripts/ocserv_server.sh /server.sh
+
+# Make binaries and scripts executable
+RUN chmod +x /entrypoint.sh /server.sh /usr/local/bin/api
+
+# Expose ports
+EXPOSE 443/tcp 443/udp 8080
+
+# Volumes
+VOLUME ["/etc/ocserv", "/usr/local/bin/db"]
+
+# Run entrypoint as root (required for ocserv)
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Default CMD
+CMD ["/server.sh"]

@@ -1,237 +1,574 @@
 #!/bin/bash
 
-if [[ $(id -u) != "0" ]]; then
-    echo -e "\e[0;31m"Error: You must be root to run this install script."\e[0m"
-    exit 1
-fi
+# ========================================
+# Script: setup-ocserv-env.sh
+# Description: Interactive script to set up environment variables
+#              for an OpenConnect VPN (ocserv) server.
+# Author: [Your Name]
+# Date: [Date]
+# License: MIT (or your preferred license)
+# ========================================
 
-# Install NetworkManager if nmcli is not available (for minimal Ubuntu 20.04 systems)
-if ! command -v nmcli >/dev/null 2>&1; then
-    echo -e "\e[0;33mNetworkManager (nmcli) not found. Installing...\e[0m"
-    sudo apt update
-    sudo apt install -y network-manager
-fi
+# Exit immediately if a command exits with a non-zero status
+set -e
 
-color_echo() {
-    local color=$1
-    local text=$2
-    echo -e "\e[${color}m${text}\e[0m"
-}
+# ===============================
+# Default Configuration
+# ===============================
+HOST=$(hostname -I | awk '{print $1}')  # Default host IP (local IP)
+SSL_CN="End-way-Cisco-VPN"              # Default SSL common name
+SSL_ORG="End-way"                       # Default organization name
+SSL_EXPIRE=3650                         # SSL certificate expiration in days
+OC_NET="172.16.24.0/24"             # Default VPN subnet
+OCSERV_PORT=443                         # Default VPN port
+OCSERV_DNS="8.8.8.8"                    # Default DNS server
+LANGUAGES=en:English,zh:中文,ru:Русский,fa:فارسی,ar:العربية  # Supported languages
+SECRET_KEY=$(openssl rand -hex 32)      # Secret key for app encryption (32 hex chars)
+JWT_SECRET=$(openssl rand -hex 32)      # JWT signing secret (32 hex chars)
+SSL_C=US
+SSL_ST=CA
+SSL_L=SanFrancisco
 
-GetModes() {
-    printf "\n"
-    modes=(
-        'ocserv + user panel --- (docker)'
-        'ocserv + user panel --- (systemd) [only in ubuntu 20.04]'
-        'panel  ---------------- (systemd)'
-    )
-    color_echo "32;1" "Instalation modes:"
-    for ((i = 0; i < "${#modes[@]}"; i++)); do
-        color_echo "33" "$(printf "%4d: %s" $((i + 1)) "${modes[i]}")"
-    done
-    read -p "Enter the number corresponding to the desired mode: " mode
-    if [[ "$mode" -ge 1 && "$mode" -le "${#modes[@]}" ]]; then
-        selected_mode="${modes[$((mode - 1))]}"
-    else
-        color_echo "31" "\nInvalid selection. Please enter a valid mode number. ${mode} is out of range!\n"
-        GetModes
-    fi
-    color_echo "36;1" "Selected mode: ${selected_mode}"
+# ===============================
+# Functions
+# ===============================
 
-    if [ "$(echo "2 3" | grep -w $mode)" ] && [ "$(grep '^VERSION' /etc/os-release | grep "Focal Fossa" | wc -l)" -eq "0" ]; then
-        color_echo "31;1" "This script is only stable with Ubuntu 20.04(Focal Fossa)"
-        GetModes
-    fi
-
-    if [ "$(echo "1" | grep -w $mode)" ] && [ ! -x "$(command -v docker)" ]; then
-        color_echo "31" "Docker service is not installed"
+# ===============================
+# Ensure root or sudo access
+# ===============================
+ensure_root() {
+    if ! command -v sudo >/dev/null 2>&1; then
+        print_message error "❌ Error: sudo is not installed on this system."
         exit 1
     fi
 }
 
-GetInterface() {
+# ===============================
+# Function: print_message
+# Description: Print formatted messages with colors
+# Parameters:
+#   $1 - type: info, success, warn, error, highlight
+#   $2 - message string
+# ===============================
+print_message() {
+    local type="$1"
+    local message="$2"
+
+    local RED="\e[31m"
+    local GREEN="\e[32m"
+    local YELLOW="\e[33m"
+    local BLUE="\e[34m"
+    local MAGENTA="\e[35m"
+    local RESET="\e[0m"
+
+    case "$type" in
+        info)
+            echo -e "${BLUE}[INFO]${RESET} $message"
+            ;;
+        success)
+            echo -e "${GREEN}[SUCCESS]${RESET} $message"
+            ;;
+        warn)
+            echo -e "${YELLOW}[WARN]${RESET} $message"
+            ;;
+        error)
+            echo -e "${RED}[ERROR]${RESET} $message"
+            ;;
+        highlight)
+            echo -e "${MAGENTA}$message${RESET}"
+            ;;
+        *)
+            echo "$message"
+            ;;
+    esac
+}
+
+# ===============================
+# Function: choose_deployment
+# Description: Ask user whether to deploy via Docker or systemd
+# ===============================
+choose_deployment() {
+    print_message info "🚀 Deployment options:"
+    print_message highlight "   [1] Docker"
+    print_message highlight "   [2] systemd service"
+
+    read -rp "Choose deployment method [1-2] (default = 1): " choice
+    if [[ -z "$choice" ]]; then
+        choice=1
+    fi
+
+    case "$choice" in
+        1)
+            DEPLOY_METHOD="docker"
+            ;;
+        2)
+            DEPLOY_METHOD="systemd"
+            ;;
+        *)
+            print_message warn "Invalid choice, defaulting to Docker."
+            DEPLOY_METHOD="docker"
+            ;;
+    esac
+
+    print_message highlight "✅ Selected deployment method: ${DEPLOY_METHOD}"
     printf "\n"
-    interface_list=$(ip -o link show | awk '{print $2}' | grep -v lo | tr -d :)
-    numbered_interfaces=$(echo "$interface_list" | awk '{print NR, $0}')
-    color_echo "32;1" "Numbered interfaces:"
-    IFS=$'\n'
-    for line in $numbered_interfaces; do
-        number=$(echo "$line" | awk '{print $1}')
-        interface=$(echo "$line" | awk '{$1=""; print $0}' | sed 's/^[[:space:]]*//')
-        color_echo "33" "$(printf "%4d: %s" "$number" "$interface")"
-    done
-    unset IFS
-    read -p "Enter the number corresponding to the desired network interface: " interface_number
-    if [[ "$interface_number" -ge 1 && "$interface_number" -le $(echo "$numbered_interfaces" | wc -l) ]]; then
-        ETH=$(echo "$numbered_interfaces" | grep "^$interface_number" | awk '{$1=""; print $0}' | sed 's/^[[:space:]]*//')
+}
+
+# ===============================
+# Function: check_docker
+# Description: Check if Docker and Docker Compose (plugin) are installed.
+#              Show Docker info if installed.
+#              If missing, show installation links and exit.
+# ===============================
+check_docker() {
+    local missing=0
+
+    # Check Docker
+    if ! command -v sudo docker &> /dev/null; then
+        print_message error "❌ Docker is not installed."
+        missing=1
     else
-        color_echo "31" "\nInvalid selection. Please enter a valid number. ${interface_number} is out of range!\n"
+        print_message success "✅ Docker is installed."
+        # Show Docker version and info
+        docker_info=$(sudo docker info --format 'Server Version: {{.ServerVersion}}')
+        print_message highlight "🔹 $docker_info"
+    fi
+
+    # Check Docker Compose plugin
+    if ! sudo docker compose version &> /dev/null; then
+        print_message error "❌ Docker Compose (plugin) is not installed."
+        missing=1
+    else
+        print_message success "✅ Docker Compose (plugin) is installed."
+        compose_version=$(sudo docker compose version | head -n1)
+        print_message highlight "🔹 $compose_version"
+    fi
+
+    # If either is missing, show installation instructions and exit
+    if [[ $missing -eq 1 ]]; then
+        print_message info "🔗 Please follow the official installation guides:"
+        print_message highlight "   Docker: https://docs.docker.com/get-docker/"
+        print_message highlight "   Docker Compose: https://docs.docker.com/compose/install/"
+        exit 1
+    fi
+}
+
+# ===============================
+# Function: check_systemd_os
+# Description: Validate OS for systemd deployment.
+#              Supported: Ubuntu 20.04/22.04/24.04, Debian 11/12/13
+# ===============================
+check_systemd_os() {
+    # Detect OS
+    if [[ -f /etc/os-release ]]; then
+        . /etc/os-release
+        OS_NAME=$ID         # ubuntu or debian
+        OS_VERSION=$VERSION_ID
+    else
+        print_message error "❌ Cannot detect OS. /etc/os-release not found."
+        exit 1
+    fi
+
+    # Normalize version number (remove quotes if present)
+    OS_VERSION="${OS_VERSION//\"/}"
+
+    # Check supported OS
+    if [[ "$OS_NAME" == "ubuntu" ]]; then
+        if [[ "$OS_VERSION" != "20.04" && "$OS_VERSION" != "22.04" && "$OS_VERSION" != "24.04" ]]; then
+            print_message error "❌ Unsupported Ubuntu version: $OS_VERSION"
+            print_message info "Supported versions: 20.04, 22.04, 24.04"
+            exit 1
+        fi
+    elif [[ "$OS_NAME" == "debian" ]]; then
+        if [[ "$OS_VERSION" != "11" && "$OS_VERSION" != "12" && "$OS_VERSION" != "13" ]]; then
+            print_message error "❌ Unsupported Debian version: $OS_VERSION"
+            print_message info "Supported versions: 11, 12, 13"
+            exit 1
+        fi
+    else
+        print_message error "❌ Unsupported OS: $OS_NAME $OS_VERSION"
+        print_message info "Supported: Ubuntu 20.04/22.04/24.04, Debian 11/12/13"
+        exit 1
+    fi
+
+    print_message success "✅ OS is supported for systemd deployment: $OS_NAME $OS_VERSION"
+}
+
+# ===============================
+# Function: check_go_version
+# Description: Check if Go is installed and meets minimum version requirement
+# Parameters:
+#   $1 - minimum Go version (default: 1.25)
+# ===============================
+check_go_version() {
+    local required_version="1.25"
+
+    if ! command -v go >/dev/null 2>&1; then
+        echo "❌ Go is not installed."
+        echo "Install Go from: https://go.dev/doc/install"
+        exit 1
+    fi
+
+    local current_version
+    current_version=$(go version | awk '{print $3}' | sed 's/^go//')  # e.g., 1.25.3
+    local current_major_minor="${current_version%.*}"                     # 1.25
+
+    # Compare versions
+    if dpkg --compare-versions "$current_major_minor" "lt" "$required_version"; then
+        echo "❌ Go version $current_version is less than required $required_version."
+        echo "Please upgrade Go: https://go.dev/doc/install"
+        exit 1
+    fi
+
+    echo "✅ Go version $current_version meets requirement (≥ $required_version)."
+}
+
+
+# ===============================
+# Function: get_ip
+# Description: Detects the public IP of the VPS
+#              and allows user to confirm or override.
+# ===============================
+get_ip() {
+    print_message info "🔍 Detecting public IP ..."
+#    set -x
+
+    local detected_ip
+    detected_ip=$(curl -s --max-time 5 https://api.ipify.org || \
+                  curl -s --max-time 5 https://ifconfig.me || \
+                  curl -s --max-time 5 https://checkip.amazonaws.com)
+#    set +x
+    print_message info "Detected IP: $detected_ip"
+
+    if [[ -n "$detected_ip" && "$detected_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        print_message highlight "✅ Detected public IP: ${detected_ip}"
+        read -rp "👉 Do you want to use this IP? [Y/n]: " choice
+        case "$choice" in
+            [Nn]*)
+                read -rp "🌐 Enter your VPS host or IP: " manual_ip
+                HOST=${manual_ip:-$(hostname -I | awk '{print $1}')}
+                ;;
+            *)
+                HOST=$detected_ip
+                ;;
+        esac
+    else
+        print_message warn "⚠️ Failed to detect public IP automatically."
+        read -rp "🌐 Enter your VPS host or IP: " manual_ip
+        HOST=${manual_ip:-$(hostname -I | awk '{print $1}')}
+    fi
+
+    print_message highlight "🔧 Using host IP: ${HOST}"
+    printf "\n"
+}
+
+# ===============================
+# Function: get_envs
+# Description: Prompt user for environment configurations
+#              and set default values if left blank.
+# ===============================
+get_envs(){
+    # ocserv port
+    read -rp "Enter your ocserv port or leave blank to use ${OCSERV_PORT}: " port
+    [[ -n "$port" ]] && OCSERV_PORT=$port
+    print_message highlight "✅ Using port: ${OCSERV_PORT}"
+    printf "\n"
+
+    # Company Name
+    read -rp "Enter your company name or leave blank to use '${SSL_CN}': " cn
+    [[ -n "$cn" ]] && SSL_CN=$cn
+    print_message highlight "✅ Using company name: ${SSL_CN}"
+    printf "\n"
+
+    # Organization Name
+    read -rp "Enter your organization name or leave blank to use '${SSL_ORG}': " org
+    [[ -n "$org" ]] && SSL_ORG=$org
+    print_message highlight "✅ Using organization name: ${SSL_ORG}"
+    printf "\n"
+
+    # Country
+    read -rp "Enter your country code (2 letters) or leave blank to use '${SSL_C}': " country
+    [[ -n "$country" ]] && SSL_C=$country
+    print_message highlight "✅ Using country: ${SSL_C}"
+    printf "\n"
+
+    # State / Province
+    read -rp "Enter your state or leave blank to use '${SSL_ST}': " state
+    [[ -n "$state" ]] && SSL_ST=$state
+    print_message highlight "✅ Using state: ${SSL_ST}"
+    printf "\n"
+
+    # Locality / City
+    read -rp "Enter your city or leave blank to use '${SSL_L}': " locality
+    [[ -n "$locality" ]] && SSL_L=$locality
+    print_message highlight "✅ Using city: ${SSL_L}"
+    printf "\n"
+
+    # SSL Expiration Days
+    read -rp "Enter SSL expire days or leave blank to use ${SSL_EXPIRE} days: " expire
+    [[ -n "$expire" ]] && SSL_EXPIRE=$expire
+    print_message highlight "✅ Using SSL expiration days: ${SSL_EXPIRE}"
+    printf "\n"
+
+    # ocserv IPv4 Network
+    read -rp "Enter ocserv IPv4 network or leave blank to use ${OC_NET}: " oc_net
+    [[ -n "$oc_net" ]] && OC_NET=$oc_net
+    print_message highlight "✅ Using ocserv IPv4 network: ${OC_NET}"
+    printf "\n"
+
+    # ocserv DNS
+    read -rp "Enter your DNS server or leave blank to use default (${OCSERV_DNS}): " dns
+    [[ -n "$dns" ]] && OCSERV_DNS="$dns"
+    print_message highlight "✅ Using ocserv DNS: ${OCSERV_DNS}"
+    printf "\n"
+}
+
+# ===============================
+# Function: get_site_lang
+# Description: Allow user to select the preferred site language
+# ===============================
+get_site_lang() {
+    print_message info "🌐 Available languages:"
+    IFS=',' read -ra langs <<< "$LANGUAGES"
+    local i=1
+    for entry in "${langs[@]}"; do
+        code="${entry%%:*}"
+        name="${entry#*:}"
+        print_message highlight "   [$i] $name ($code)"
+        i=$((i+1))
+    done
+
+    printf "\n"
+    read -rp "Choose a language [1-${#langs[@]}] (default = all): " choice
+    printf "\n"
+
+    if [[ -z "$choice" ]]; then
+        print_message highlight "✅ Using all available languages: $LANGUAGES"
+        printf "\n"
+    else
+        if [[ ! "$choice" =~ ^[0-9]+$ || "$choice" -lt 1 || "$choice" -gt ${#langs[@]} ]]; then
+            choice=1
+        fi
+        selected="${langs[$((choice-1))]}"
+        LANGUAGES=$selected
+        print_message highlight "✅ Selected site language: ${selected#*:} (${selected%%:*})"
+        printf "\n"
+    fi
+}
+
+# ===============================
+# Function: set_environment
+# Description: Generate a .env file with the configured environment variables
+# ===============================
+set_environment() {
+    ENV_FILE=".env"
+
+#    if [[ "$DEPLOY_METHOD" == "docker" ]]; then
+#        DB_HOST=db
+#    else
+#        DB_HOST=127.0.0.1
+#    fi
+
+
+    print_message info "Creating environment file at $ENV_FILE ..."
+    cat > "$ENV_FILE" <<EOL
+HOST=${HOST}
+SECRET_KEY=${SECRET_KEY}
+JWT_SECRET=${JWT_SECRET}
+SSL_CN=${SSL_CN}
+SSL_ORG=${SSL_ORG}
+OC_NET=${OC_NET}
+SSL_C=${SSL_C}
+SSL_ST=${SSL_ST}
+SSL_L=${SSL_L}
+SSL_EXPIRE=${SSL_EXPIRE}
+OCSERV_PORT=${OCSERV_PORT}
+OCSERV_DNS=${OCSERV_DNS}
+LANGUAGES="${LANGUAGES}"
+ALLOW_ORIGINS=https://${HOST}:3443
+EOL
+
+    print_message success "✅ Environment file created successfully."
+    print_message info "🔧 Environments written to .env:"
+    print_message highlight "   HOST             = ${HOST}"
+    print_message highlight "   SECRET_KEY       = ${SECRET_KEY:0:8}..."
+    print_message highlight "   JWT_SECRET       = ${JWT_SECRET:0:8}..."
+    print_message highlight "   SSL_CN           = ${SSL_CN}"
+    print_message highlight "   SSL_ORG          = ${SSL_ORG}"
+    print_message highlight "   SSL_C            = ${SSL_C}"
+    print_message highlight "   SSL_ST           = ${SSL_ST}"
+    print_message highlight "   SSL_L            = ${SSL_L}"
+    print_message highlight "   OC_NET           = ${OC_NET}"
+    print_message highlight "   SSL_EXPIRE       = ${SSL_EXPIRE}"
+    print_message highlight "   OCSERV_PORT      = ${OCSERV_PORT}"
+    print_message highlight "   OCSERV_DNS       = ${OCSERV_DNS}"
+    print_message highlight "   LANGUAGES        = ${LANGUAGES}"
+    print_message highlight "   ALLOW_ORIGINS    = https://${HOST}:3443"
+    printf "\n"
+}
+
+# ===============================
+# Function: setup_docker
+# Description: Pull required Docker images and start Docker Compose stack
+# ===============================
+setup_docker() {
+    print_message info "🚀 Pulling required Docker images..."
+    sudo docker pull golang:1.25.0
+    sudo docker pull debian:trixie-slim
+    sudo docker pull nginx:alpine
+    print_message success "🎉 All Docker images pulled successfully!"
+
+    print_message info "🛠 Starting Docker Compose..."
+    sleep 3
+    sudo docker compose up --build -d
+    print_message success "✅ Docker Compose deployment completed!"
+}
+
+
+# ===============================
+# Function: GetInterface
+# Description: List physical network interfaces and let user select one.
+#              If only one interface exists, automatically select it.
+# Sets:
+#   ETH - selected network interface
+# ===============================
+get_interface() {
+    printf "\n"
+
+    # Get all physical interfaces (exclude lo, docker bridges, veth, tun, br-*, vethe*)
+    interface_list=$(ip -o link show | awk '{print $2}' | tr -d ':' | grep -Ev '^(lo|docker|br-|veth|tun|vethe)')
+
+    if [[ -z "$interface_list" ]]; then
+        print_message error "❌ No physical network interfaces found!"
+        exit 1
+    fi
+
+    # Convert to array
+    numbered_interfaces=()
+    for iface in $interface_list; do
+        numbered_interfaces+=("$iface")
+    done
+
+    # If only one interface exists, auto-select it
+    if [[ ${#numbered_interfaces[@]} -eq 1 ]]; then
+        ETH="${numbered_interfaces[0]}"
+        print_message highlight "✅ Only one physical interface found. Auto-selected: $ETH"
+        return
+    fi
+
+    # Multiple interfaces: show numbered list
+    print_message highlight "Available physical network interfaces:"
+    i=1
+    for iface in "${numbered_interfaces[@]}"; do
+        print_message highlight "$(printf "%4d: %s" "$i" "$iface")"
+        ((i++))
+    done
+
+    # Prompt user for selection
+    read -rp "Enter the number corresponding to the desired network interface: " interface_number
+    if [[ "$interface_number" =~ ^[0-9]+$ ]] && (( interface_number >= 1 && interface_number <= ${#numbered_interfaces[@]} )); then
+        ETH="${numbered_interfaces[$((interface_number-1))]}"
+        print_message highlight "✅ Selected interface: $ETH"
+        printf "\n"
+    else
+        print_message error "❌ Invalid selection: $interface_number. Please try again."
+        printf "\n"
         GetInterface
     fi
-    color_echo "36;1" "Selected interface: $ETH"
 }
 
-GetIP() {
-    printf "\n"
-    HOST_IP=$(hostname -I | cut -d' ' -f1)
-    color_echo "32;1" "Your host IP: ${HOST_IP}"
-    read -p "Enter Your Host IP or let it blank : " host_ip
-    if [[ -n "${host_ip}" ]]; then
-        HOST_IP=${host_ip}
-    fi
-    color_echo "36;1" "Host IP: ${HOST_IP}"
+
+# ===============================
+# Function: setup_systemd
+# Description: Setup systemd deployment and check Go environment.
+# ===============================
+setup_systemd() {
+    print_message info "⚙️ Setting up systemd service..."
+
+    # Let user select physical interface
+    get_interface
+
+    # Export environment variables for child script
+    export ETH
+    export OCSERV_PORT
+    export SSL_OC_NET
+    export SSL_CN
+    export SSL_ORG
+    export SSL_EXPIRE
+    export OCSERV_DNS
+
+    # Run the systemd ocserv setup script
+    ./scripts/systemd_setup.sh
 }
 
-GetDomain() {
-    printf "\n"
-    color_echo "35;3" "get public ip from myip.opendns.com"
-    color_echo "35;3" "dig started ..."
-    PUBLIC_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
-    if [ "$?" != "0" ]; then
-        PUBLIC_IP=${HOST_IP}
-    fi
-    echo "Your Public IP: ${PUBLIC_IP}"
-    DOMAIN=
-    read -p "Enter Your Domain or let it blank to use ${PUBLIC_IP}: " domain
-    if [[ -n "${domain}" ]]; then
-        VALIDATE="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
-        if [[ "${domain}" =~ "${VALIDATE}" ]]; then
-            DOMAIN=${domain}
-        fi
-    fi
-    CORS_ALLOWED=""
-    if [[ -n "${DOMAIN}" ]]; then
-        color_echo "36;1" "Your Domain: ${DOMAIN}"
-        CORS_ALLOWED="http://${DOMAIN},https://${DOMAIN}"
-        HOST=${DOMAIN}
-    elif [[ -n "${PUBLIC_IP}" ]]; then
-        color_echo "36;1" "Your Public IP: ${PUBLIC_IP}"
-        CORS_ALLOWED="http://${PUBLIC_IP},https://${PUBLIC_IP}"
-        HOST=${PUBLIC_IP}
+
+# ===============================
+# Function: deploy
+# Description: Deploy the application based on the chosen deployment method.
+#              - If Docker is selected:
+#                  1. Pulls required Docker images (golang, debian, nginx)
+#                  2. Builds and starts the Docker Compose stack
+#              - If systemd is selected:
+#                  Calls the systemd setup function (placeholder for now)
+# Parameters:
+#   DEPLOY_METHOD - must be either "docker" or "systemd"
+# ===============================
+deploy(){
+    if [[ "$DEPLOY_METHOD" == "docker" ]]; then
+        setup_docker
     else
-        HOST=${HOST_IP}
+#        export DB_HOST=127.0.0.1
+        setup_systemd
     fi
-    CORS_ALLOWED="${CORS_ALLOWED},http://${HOST_IP},https://${HOST_IP}"
 }
 
-GetPort() {
-    printf "\n"
-    PORT=20443
-    read -p "Enter Your ocserv port or let it blank to use ${PORT}: " port
-    if [[ -n "${port}" ]]; then
-        PORT=${port}
-    fi
-    color_echo "36;1" "Ocserv Port: ${PORT}"
-}
 
-GetDNS() {
-    printf "\n"
-    DNS="8.8.8.8"
-    read -p "Enter Your DNS or let it blank to use ${DNS}: " dns
-    if [[ -n "${dns}" ]]; then
-        DNS=${dns}
-    fi
-    color_echo "36;1" "DNS: ${DNS}"
-}
+# ===============================
+# Main Execution
+# ===============================
+main() {
+    # Ensure script is running as root or sudo
+    ensure_root "$@"
 
-GetOcservVars() {
-    printf "\n"
-    CN="End-way-Cisco-VPN"
-    read -p "Enter Your company name or let it blank to use ${CN}: " cn
-    if [[ -n "${cn}" ]]; then
-        CN=${cn}
-    fi
-    color_echo "36;1" "Your company name: ${CN}\n"
+    # Deployment choice: docker or systemd
+    choose_deployment
 
-    ORG="End-way"
-    read -p "Enter your organization name or let it blank to use ${ORG}: " org
-    if [[ -n "${org}" ]]; then
-        ORG=${org}
-    fi
-    color_echo "36;1" "Your organization name: ${ORG}\n"
+    # install curl
+    sudo apt install -y curl
 
-    EXPIRE=3650
-    read -p "Enter ssl expire days or let it blank to use ${EXPIRE} days: " expire
-    if [[ -n "${expire}" ]]; then
-        EXPIRE=${expire}
-    fi
-    color_echo "36;1" "Your organization name: ${EXPIRE}\n"
-
-    OC_NET="172.16.24.0/24"
-    read -p "Enter ocserv ipv4-network or let it blank to use ${OC_NET}: " oc_net
-    if [[ -n "${oc_net}" ]]; then
-        OC_NET=${oc_net}
-    fi
-    color_echo "36;1" "Your ocserv ipv4-network: ${OC_NET}\n"
-}
-
-UpdateIpTables() {
-    color_echo "35;3" "Installing iptables-persistent ..."
-    apt install -y iptables-persistent
-    iptables -I INPUT -p tcp --dport ${PORT} -j ACCEPT
-    iptables -I INPUT -p udp --dport ${PORT} -j ACCEPT
-    iptables -I FORWARD -s ${OC_NET} -j ACCEPT
-    iptables -I FORWARD -d ${OC_NET} -j ACCEPT
-    iptables -t nat -A POSTROUTING -s ${OC_NET} -o ${ETH} -j MASQUERADE
-    #iptables -t nat -A POSTROUTING -j MASQUERADE
-    sh -c "iptables-save > /etc/iptables/rules.v4"
-    sh -c "ip6tables-save > /etc/iptables/rules.v6"
-}
-
-UpdateDockerProdEnv() {
-    file_path="./prod.env"
-    declare -A variables=(
-        ["ORG"]="${ORG}"
-        ["EXPIRE"]="${EXPIRE}"
-        ["CN"]="${CN}"
-        ["OC_NET"]="${OC_NET}"
-        ["CORS_ALLOWED"]="${CORS_ALLOWED}"
-        ["HOST"]="${HOST}"
-        ["DOMAIN"]="${DOMAIN}"
-        ["PORT"]="${PORT}"
-    )
-    if [ -e "$file_path" ]; then
-        truncate -s 0 ${file_path}
+    # Check prerequisites based on deployment method
+    if [[ "$DEPLOY_METHOD" == "docker" ]]; then
+        check_docker
     else
-        touch "$file_path"
+        check_systemd_os
+        check_go_version
     fi
-    for key in "${!variables[@]}"; do
-        echo "$key=${variables[$key]}" >>"$file_path"
-    done
+
+    # Load existing .env or run interactive setup
+    ENV_FILE=".env"
+    if [[ -f "$ENV_FILE" ]]; then
+        print_message info "✅ .env file detected. Loading environment variables..."
+        set -o allexport
+        # shellcheck disable=SC1090
+        source "${ENV_FILE}"
+        set +o allexport
+        print_message success "✅ Environment loaded from ${ENV_FILE}"
+    else
+        print_message info "⚡ No .env file found. Running interactive setup..."
+        get_ip
+        get_envs
+        get_site_lang
+        set_environment
+    fi
+
+    # Deploy application
+    deploy
+
+    # Show service URL
+    print_message highlight "🌐 Web service is up and running!"
+    print_message highlight "🔗 Access it at: https://${HOST}:3443 or http://${HOST}:3000"
+    print_message highlight "⚡ Tip: Make sure your firewall allows ports 3000 and 3443"
+    exit 0
 }
 
-GetModes
-
-GetIP
-
-GetDomain
-
-GetPort
-
-GetDNS
-
-GetOcservVars
-
-if [[ $mode != '1' ]]; then
-    chmod +x ./configs/ocserv.sh
-    chmod +x ./configs/panel.sh
-    GetInterface
-fi
-
-color_echo "35;1" "Installing ${selected_mode} .............."
-
-export CN ORG EXPIRE OC_NET DOMAIN HOST PORT DNS
-
-if [[ $mode == '1' ]]; then
-    UpdateDockerProdEnv
-    DOCKER_VARS="CN=${CN} ORG=${ORG} EXPIRE=${EXPIRE} OC_NET=${OC_NET} DOMAIN=${DOMAIN} HOST=${HOST} PORT=${PORT} DNS=${DNS}"
-    BUILD="DOCKER_SCAN_SUGGEST=false ${DOCKER_VARS} docker compose up -d --build"
-    eval "${BUILD}"
-elif [[ $mode == '2' ]]; then
-    ./configs/ocserv.sh
-    ./configs/panel.sh
-    UpdateIpTables
-    color_echo "35;1" "Installing completed"
-elif [[ $mode == '3' ]]; then
-    ./configs/panel.sh
-fi
+main

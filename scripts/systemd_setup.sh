@@ -52,7 +52,7 @@ log "Starting deployment..."
 # -----------------------
 # Deployment directories
 # -----------------------
-BIN_DIR="/opt/ocserv_user_management"
+BIN_DIR="/opt/ocserv_dashboard"
 sudo mkdir -p "$BIN_DIR"
 log "Using deployment directory: $BIN_DIR"
 
@@ -123,7 +123,7 @@ done
 # -----------------------
 # Environment file
 # -----------------------
-ENV_FILE="${BIN_DIR}/ocserv_user_management.env"
+ENV_FILE="${BIN_DIR}/ocserv_dashboard.env"
 if [[ -f ".env" ]]; then
   sudo cp .env "$ENV_FILE"
   log "Copied environment file to $ENV_FILE"

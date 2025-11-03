@@ -212,14 +212,19 @@ watch(
             <v-col cols="12" lg="4" md="6">
                 <v-label class="font-weight-bold mb-1 text-capitalize">{{ t('TRAFFIC_SIZE') }}</v-label>
                 <v-text-field
-                    v-model="createData.traffic_size"
+                    v-model.number="createData.traffic_size"
                     :disabled="createData.traffic_type == ModelsOcservUserTrafficTypeEnum.FREE"
                     :rules="createData.traffic_type == ModelsOcservUserTrafficTypeEnum.FREE ? [] : [rules.required]"
                     color="primary"
                     hide-details
-                    suffix="Bytes"
+                    suffix="GB"
                     type="number"
                     variant="outlined"
+                    @update:modelValue="
+                        (val: any) => {
+                            createData.traffic_size = Boolean(val) ? (Number(val) as any) : null;
+                        }
+                    "
                 />
             </v-col>
             <v-col cols="12" lg="4" md="6">

@@ -163,12 +163,12 @@ onMounted(() => {
                                     </v-col>
 
                                     <v-col cols="12" md="4">
-                                        <span class="font-medium text-gray-600 text-capitalize"> RX: </span>
+                                        <span class="font-medium text-gray-600 text-capitalize"> RX {{ t("USED") }}: </span>
                                         <span class="ms-1 text-primary">{{ result.rx }} GB</span>
                                     </v-col>
 
                                     <v-col cols="12" md="4">
-                                        <span class="font-medium text-gray-600 text-capitalize"> TX: </span>
+                                        <span class="font-medium text-gray-600 text-capitalize"> TX {{ t("USED") }}: </span>
                                         <span class="ms-1 text-primary">{{ result.tx }} GB</span>
                                     </v-col>
 

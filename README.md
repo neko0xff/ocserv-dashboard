@@ -9,11 +9,11 @@ Easily manage users, groups, and server configurations while keeping your VPN se
 </p>
 
 <p align="center">
-  <img alt="GitHub stars" src="https://img.shields.io/github/stars/mmtaee/ocserv-users-management">
-  <img alt="GitHub forks" src="https://img.shields.io/github/forks/mmtaee/ocserv-users-management">
-  <img alt="GitHub issues" src="https://img.shields.io/github/issues/mmtaee/ocserv-users-management">
-  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/mmtaee/ocserv-users-management">
-  <img alt="Repo size" src="https://img.shields.io/github/repo-size/mmtaee/ocserv-users-management">
+  <img alt="GitHub stars" src="https://img.shields.io/github/stars/mmtaee/ocserv-dashboard">
+  <img alt="GitHub forks" src="https://img.shields.io/github/forks/mmtaee/ocserv-dashboard">
+  <img alt="GitHub issues" src="https://img.shields.io/github/issues/mmtaee/ocserv-dashboard">
+  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/mmtaee/ocserv-dashboard">
+  <img alt="Repo size" src="https://img.shields.io/github/repo-size/mmtaee/ocserv-dashboard">
 </p>
 
 <p align="center">
@@ -67,7 +67,7 @@ Easily manage users, groups, and server configurations while keeping your VPN se
 
 ## ⚠️ Legacy Version Note
 
-- **Branch name:** [legacy](https://github.com/mmtaee/ocserv-users-management/tree/legacy)
+- **Branch name:** [legacy](https://github.com/mmtaee/ocserv-dashboard/tree/legacy)
 - **Old version:** Developed using **Python backend** with **Vue 2 frontend**.
 - **Features:** Minimal, limited functionality compared to the current version — only basic user and group management existed.
 
@@ -142,4 +142,4 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 ---
 ## 📈 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mmtaee/ocserv-users-management&type=Date)](https://www.star-history.com/#mmtaee/ocserv-users-management&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=mmtaee/ocserv-dashboard&type=Date)](https://www.star-history.com/#mmtaee/ocserv-dashboard&Date)

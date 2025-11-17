@@ -1,4 +1,4 @@
-package web
+package sse
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 type Server struct {
-	clients map[chan string]string // IP
+	clients map[chan string]string // []IP
 	mu      sync.Mutex
 }
 

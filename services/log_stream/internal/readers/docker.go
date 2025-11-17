@@ -1,4 +1,4 @@
-package stream
+package readers
 
 import (
 	"bufio"
@@ -39,6 +39,7 @@ func DockerStreamLogs(ctx context.Context, containerName string, streamChan chan
 
 	scanner := bufio.NewScanner(pr)
 	for scanner.Scan() {
+
 		select {
 		case <-ctx.Done():
 			return nil

@@ -7,9 +7,9 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mmtaee/ocserv-users-management/common/pkg/config"
 	"github.com/mmtaee/ocserv-users-management/common/pkg/database"
-	"github.com/mmtaee/ocserv-users-management/stream_log/internal/processor"
-	"github.com/mmtaee/ocserv-users-management/stream_log/internal/stream"
-	"github.com/mmtaee/ocserv-users-management/stream_log/internal/web"
+	"github.com/mmtaee/ocserv-users-management/log_stream/internal/readers"
+	"github.com/mmtaee/ocserv-users-management/log_stream/internal/sse"
+	"github.com/mmtaee/ocserv-users-management/log_stream/internal/stats"
 	"log"
 	"net/http"
 	"os"
@@ -39,48 +39,40 @@ func main() {
 		log.SetFlags(log.LstdFlags | log.Lshortfile)
 	}
 
-	service := "ocserv"
-	stringStream := make(chan string, 100)
-	broadcaster := make(chan string, 1)
 	ctx, cancel := context.WithCancel(context.Background())
+	service := "ocserv"
 
 	config.Init(debug, host, port)
 	cfg := config.Get()
-
 	database.Connect()
 
-	processor.Init()
-	go processor.Processor(ctx, stringStream, broadcaster)
-	go processor.CalculateUserStats(ctx, stringStream)
-	go processor.UserExpiryCron(ctx)
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		sig := <-sigChan
-		log.Printf("\nReceived signal: %s\n", sig)
-		cancel()
-	}()
+	streamChan := make(chan string, 1000)
+	lineLogChan := make(chan string, 1000)
+	broadcastChan := make(chan string, 1000)
 
 	if systemd {
 		log.Println("Running on host – using systemd logs")
 		go func() {
-			if err := stream.SystemdStreamLogs(ctx, service, stringStream); err != nil {
+			if err := readers.SystemdStreamLogs(ctx, service, streamChan); err != nil {
 				log.Printf("Systemd log error: %v\n", err)
 			}
 		}()
 	} else {
 		log.Println("Running in Docker – using Docker logs")
 		go func() {
-			if err := stream.DockerStreamLogs(ctx, service, stringStream); err != nil {
+			if err := readers.DockerStreamLogs(ctx, service, streamChan); err != nil {
 				log.Println(err)
 			}
 		}()
 	}
 
-	sseServer := web.NewSSEServer()
-	sseServer.StartBroadcast(broadcaster)
+	statService := stats.NewStatService(ctx, lineLogChan)
+	go func() {
+		statService.CalculateUserStats()
+	}()
+
+	sseServer := sse.NewSSEServer()
+	sseServer.StartBroadcast(broadcastChan)
 
 	go func() {
 		server := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
@@ -91,7 +83,47 @@ func main() {
 		}
 	}()
 
+	go func() {
+		start(ctx, streamChan, broadcastChan, lineLogChan)
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigChan
+		log.Printf("\nReceived signal: %s\n", sig)
+		cancel()
+	}()
+
 	<-ctx.Done()
 	log.Println("Service shutting down successfully")
+}
 
+func start(ctx context.Context, streamText <-chan string, broadcaster, lineLogChan chan<- string) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case line, ok := <-streamText:
+			if !ok {
+				return
+			}
+			// Send to broadcaster
+			select {
+			case broadcaster <- line:
+			case <-ctx.Done():
+				return
+			default:
+				// skip log, continue
+			}
+
+			// Send to lineLogChan
+			select {
+			case lineLogChan <- line:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}
 }

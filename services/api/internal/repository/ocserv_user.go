@@ -67,7 +67,7 @@ func (o *OcservUserRepository) Users(
 		totalQuery = totalQuery.Where("owner = ?", owner)
 	}
 	err := totalQuery.Count(&totalRecords).Error
-	
+
 	if err != nil {
 		return nil, 0, err
 	}
@@ -344,6 +344,7 @@ func (o *OcservUserRepository) TopBandwidthUser(ctx context.Context) (TopBandwid
 	if err := o.db.WithContext(ctx).
 		Model(&models.OcservUser{}).
 		Select("uid, rx, tx, username, created_at").
+		Where("rx > 0").
 		Order("rx DESC, id DESC").
 		Limit(4).
 		Find(&topRx).Error; err != nil {
@@ -355,6 +356,7 @@ func (o *OcservUserRepository) TopBandwidthUser(ctx context.Context) (TopBandwid
 	if err := o.db.WithContext(ctx).
 		Model(&models.OcservUser{}).
 		Select("uid, rx, tx, username, created_at").
+		Where("tx > 0").
 		Order("tx DESC, id DESC").
 		Limit(4).
 		Find(&topTx).Error; err != nil {
@@ -373,7 +375,7 @@ func (o *OcservUserRepository) TotalBandwidthUser(ctx context.Context, id string
 		Select(`
         COALESCE(SUM(rx),0) / 1073741824.0 AS rx,
         COALESCE(SUM(tx),0) / 1073741824.0 AS tx`).
-		Scan(&total).Error
+		Find(&total).Error
 	if err != nil {
 		return total, err
 	}
@@ -382,12 +384,13 @@ func (o *OcservUserRepository) TotalBandwidthUser(ctx context.Context, id string
 
 func (o *OcservUserRepository) TotalBandwidth(ctx context.Context) (TotalBandwidths, error) {
 	var total TotalBandwidths
+
 	err := o.db.WithContext(ctx).
 		Model(&models.OcservUserTrafficStatistics{}).
 		Select(`
         COALESCE(SUM(rx),0) / 1073741824.0 AS rx,
         COALESCE(SUM(tx),0) / 1073741824.0 AS tx`).
-		Scan(&total).Error
+		Find(&total).Error
 	if err != nil {
 		return total, err
 	}
@@ -411,7 +414,7 @@ func (o *OcservUserRepository) TotalBandwidthDateRange(ctx context.Context, date
 		query = query.Where("created_at <= ?", *dateEnd)
 	}
 
-	err := query.Scan(&total).Error
+	err := query.Find(&total).Error
 	if err != nil {
 		return total, err
 	}
@@ -436,7 +439,7 @@ func (o *OcservUserRepository) TotalBandwidthUserDateRange(ctx context.Context, 
 		query = query.Where("created_at <= ?", *dateEnd)
 	}
 
-	err := query.Scan(&total).Error
+	err := query.Find(&total).Error
 	if err != nil {
 		return total, err
 	}

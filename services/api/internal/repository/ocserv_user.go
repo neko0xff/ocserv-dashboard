@@ -43,7 +43,7 @@ type OcservUserRepositoryInterface interface {
 	Statistics(ctx context.Context, dateStart, dateEnd *time.Time) (*[]models.DailyTraffic, error)
 	TotalUsers(ctx context.Context) (int64, error)
 	TopBandwidthUser(ctx context.Context) (TopBandwidthUsers, error)
-	TotalBandwidthUser(ctx context.Context, id string) (TotalBandwidths, error)
+	TotalBandwidthUser(ctx context.Context, uid string) (TotalBandwidths, error)
 	TotalBandwidth(ctx context.Context) (TotalBandwidths, error)
 	TotalBandwidthDateRange(ctx context.Context, dateStart, dateEnd *time.Time) (TotalBandwidths, error)
 	TotalBandwidthUserDateRange(ctx context.Context, id string, dateStart, dateEnd *time.Time) (TotalBandwidths, error)
@@ -367,15 +367,28 @@ func (o *OcservUserRepository) TopBandwidthUser(ctx context.Context) (TopBandwid
 	return result, nil
 }
 
-func (o *OcservUserRepository) TotalBandwidthUser(ctx context.Context, id string) (TotalBandwidths, error) {
+func (o *OcservUserRepository) TotalBandwidthUser(ctx context.Context, uid string) (TotalBandwidths, error) {
 	var total TotalBandwidths
+
+	//err := o.db.WithContext(ctx).
+	//	Model(&models.OcservUserTrafficStatistics{}).
+	//	Joins("JOIN ocserv_users ou ON ou.id = ocserv_user_traffic_statistics.oc_user_id").
+	//	Where("ou.uid = ?", uid).
+	//	Select(`
+	//    COALESCE(SUM(rx),0) / 1073741824.0 AS rx,
+	//    COALESCE(SUM(tx),0) / 1073741824.0 AS tx`).
+	//	Scan(&total).Error
+
 	err := o.db.WithContext(ctx).
-		Model(&models.OcservUserTrafficStatistics{}).
-		Where("oc_user_id = ? ", id).
+		Table("ocserv_user_traffic_statistics AS t").
+		Joins("JOIN ocserv_users ou ON ou.id = t.oc_user_id").
+		Where("ou.uid = ?", uid).
 		Select(`
-        COALESCE(SUM(rx),0) / 1073741824.0 AS rx,
-        COALESCE(SUM(tx),0) / 1073741824.0 AS tx`).
-		Find(&total).Error
+            COALESCE(SUM(t.rx),0) / 1073741824.0 AS rx,
+            COALESCE(SUM(t.tx),0) / 1073741824.0 AS tx
+        `).
+		Scan(&total).Error
+
 	if err != nil {
 		return total, err
 	}
@@ -390,7 +403,7 @@ func (o *OcservUserRepository) TotalBandwidth(ctx context.Context) (TotalBandwid
 		Select(`
         COALESCE(SUM(rx),0) / 1073741824.0 AS rx,
         COALESCE(SUM(tx),0) / 1073741824.0 AS tx`).
-		Find(&total).Error
+		Scan(&total).Error
 	if err != nil {
 		return total, err
 	}
@@ -414,7 +427,7 @@ func (o *OcservUserRepository) TotalBandwidthDateRange(ctx context.Context, date
 		query = query.Where("created_at <= ?", *dateEnd)
 	}
 
-	err := query.Find(&total).Error
+	err := query.Scan(&total).Error
 	if err != nil {
 		return total, err
 	}
@@ -439,7 +452,7 @@ func (o *OcservUserRepository) TotalBandwidthUserDateRange(ctx context.Context, 
 		query = query.Where("created_at <= ?", *dateEnd)
 	}
 
-	err := query.Find(&total).Error
+	err := query.Scan(&total).Error
 	if err != nil {
 		return total, err
 	}

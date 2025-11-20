@@ -30,6 +30,7 @@
     "CREATE_OCSERV_GROUP_TITLE": "создать группу OCSERV",
     "CREATE_OCSERV_USER_TITLE": "создать пользователя OCSERV",
     "CREATE_STAFF_USER_TITLE": "создать сотрудника",
+    "CURRENT": "текущий",
     "CUSTOMERS_SUMMARY_BTN_ROUTE": "страница обзора клиентов",
     "CUSTOM_INTERNAL_ROUTE": "пользовательский внутренний маршрут",
     "DASHBOARD": "Панель управления",

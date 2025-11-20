@@ -1,14 +1,20 @@
 import { ModelsOcservUserTrafficTypeEnum } from '@/api';
 import { useI18n } from 'vue-i18n';
 
+const numberToFixer = (n: number, fixture: number = 4): string => {
+    if (n === 0) return '0';
+
+    const threshold = 1 / 10 ** fixture;
+    if (Math.abs(n) < threshold) return '0';
+
+    return n.toFixed(fixture);
+};
+
 const bytesToGB = (bytes: number, fixture: number = 6): string => {
     if (bytes === 0) return '0';
 
-    let result = bytes / 1024 ** 3;
-    if (result < 1 / fixture) {
-        return '0';
-    }
-    return result.toFixed(fixture); // returns GB as a string with 6 decimal places
+    const result = bytes / 1024 ** 3;
+    return numberToFixer(result, fixture);
 };
 
 const formatDateTime = (dateString: string | undefined, message: string | undefined): string => {
@@ -142,11 +148,6 @@ const trafficTypesTransformer = (item: ModelsOcservUserTrafficTypeEnum): string 
         default:
             return item;
     }
-};
-
-const numberToFixer = (n: number, fixture: number = 4) => {
-    if (n === 0) return 0;
-    return n.toFixed(fixture);
 };
 
 const toISODateString = (date: Date): string => {

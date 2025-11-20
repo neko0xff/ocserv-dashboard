@@ -30,6 +30,7 @@
     "CREATE_OCSERV_GROUP_TITLE": "create ocserv group",
     "CREATE_OCSERV_USER_TITLE": "create ocserv user",
     "CREATE_STAFF_USER_TITLE": "create staff user",
+    "CURRENT": "current",
     "CUSTOMERS_SUMMARY_BTN_ROUTE": "customer summary page",
     "CUSTOM_INTERNAL_ROUTE": "custom internal route",
     "DASHBOARD": "dashboard",

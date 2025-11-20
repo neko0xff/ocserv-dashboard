@@ -30,6 +30,7 @@
     "CREATE_OCSERV_GROUP_TITLE": "创建 OCSERV 组",
     "CREATE_OCSERV_USER_TITLE": "创建 OCSERV 用户",
     "CREATE_STAFF_USER_TITLE": "创建员工用户",
+    "CURRENT": "当前",
     "CUSTOMERS_SUMMARY_BTN_ROUTE": "客户概览页面",
     "CUSTOM_INTERNAL_ROUTE": "自定义内部路由",
     "DASHBOARD": "仪表板",

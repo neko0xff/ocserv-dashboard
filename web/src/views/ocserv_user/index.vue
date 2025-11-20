@@ -216,17 +216,31 @@ onMounted(() => {
                                 </td>
                                 <td style="cursor: pointer">
                                     <div>
-                                        RX: <br />
+                                        RX:
+                                        <span
+                                            v-if="item.traffic_type != ModelsOcservUserTrafficTypeEnum.FREE"
+                                            class="text-muted text-subtitle-2"
+                                        >
+                                            ({{ t('CURRENT') }})
+                                        </span>
+                                        <br />
                                         <v-tooltip :text="`${item.rx.toLocaleString()} bytes`">
                                             <template #activator="{ props }">
                                                 <span v-bind="props" class="text-info">
-                                                    {{ bytesToGB(item.rx, 4) }} GB
+                                                    {{ bytesToGB(item.rx, 6) }} GB
                                                 </span>
                                             </template>
                                         </v-tooltip>
                                     </div>
                                     <div>
-                                        TX: <br />
+                                        TX:
+                                        <span
+                                            v-if="item.traffic_type != ModelsOcservUserTrafficTypeEnum.FREE"
+                                            class="text-muted text-subtitle-2"
+                                        >
+                                            ({{ t('CURRENT') }})
+                                        </span>
+                                        <br />
                                         <v-tooltip :text="`${item.tx.toLocaleString()} bytes`">
                                             <template #activator="{ props }">
                                                 <span v-bind="props" class="text-info">

@@ -60,12 +60,12 @@ const txPercentage = computed(() => {
                             <h6 class="text-h6 text-capitalize text-body-1">
                                 {{ t('TOTAL') }} TX:
                                 <br />
-                                <span class="text-muted"> {{ numberToFixer(result.tx, 6) }} GB </span>
+                                <span class="text-muted"> {{ numberToFixer(result.tx, 8) }} GB </span>
                             </h6>
                             <h6 class="text-h6 text-capitalize text-body-1 mt-5">
                                 {{ t('TOTAL') }} RX:
                                 <br />
-                                <span class="text-muted text-body-1"> {{ numberToFixer(result.rx, 6) }} GB </span>
+                                <span class="text-muted text-body-1"> {{ numberToFixer(result.rx, 8) }} GB </span>
                             </h6>
                             <h6 class="text-h6 text-capitalize text-body-1 mt-5">
                                 {{ t('AVERAGE') }} (TX):

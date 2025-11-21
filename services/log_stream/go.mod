@@ -1,4 +1,4 @@
-module github.com/mmtaee/ocserv-users-management/stream_log
+module github.com/mmtaee/ocserv-users-management/log_stream
 
 go 1.25.0
 
@@ -6,8 +6,6 @@ require (
 	github.com/docker/docker v28.3.3+incompatible
 	github.com/joho/godotenv v1.5.1
 	github.com/mmtaee/ocserv-users-management/common v0.0.0-00010101000000-000000000000
-	github.com/pkg/errors v0.9.1
-	github.com/robfig/cron/v3 v3.0.1
 	gorm.io/gorm v1.30.1
 )
 
@@ -33,6 +31,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect

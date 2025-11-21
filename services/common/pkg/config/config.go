@@ -17,7 +17,7 @@ type Config struct {
 
 var cfg *Config
 
-func Init(debug bool, host string, port int) {
+func Init(debug bool, host string, port int, ignore ...bool) {
 	secretKey := os.Getenv("SECRET_KEY")
 	if secretKey == "" {
 		secretKey = "SECRET_KEY122456"

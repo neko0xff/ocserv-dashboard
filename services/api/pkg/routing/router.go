@@ -39,8 +39,6 @@ var (
 func Serve(cfg *config.Config) {
 	server := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
-	logger.Info("Starting server at " + server)
-
 	e = echo.New()
 
 	e.Logger = NewLoggerWrapper(logger.GetLogger())
@@ -76,7 +74,7 @@ func Serve(cfg *config.Config) {
 		e.Logger.SetLevel(LabstackLog.DEBUG)
 		verboseLog(server)
 	} else {
-		e.Logger.SetLevel(LabstackLog.WARN)
+		e.Logger.SetLevel(LabstackLog.INFO)
 		e.HideBanner = true
 		e.HidePort = true
 	}
@@ -100,9 +98,11 @@ func Serve(cfg *config.Config) {
 		},
 	}))
 
-	if err := e.Start(server); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	err := e.Start(server)
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		e.Logger.Fatal("shutting down the server", err)
 	}
+	logger.Info("Starting server at " + server)
 }
 
 func Shutdown(ctx context.Context) {

@@ -77,7 +77,7 @@ func main() {
 		server := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 		http.HandleFunc("/logs", sseServer.SSEHandler())
 
-		logger.Info("Starting server on ", server)
+		logger.Info("Starting server on %s", server)
 		if err := http.ListenAndServe(server, nil); err != nil {
 			logger.Error("Error starting server: %v", err)
 		}

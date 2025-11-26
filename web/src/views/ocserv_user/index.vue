@@ -159,29 +159,19 @@ onMounted(() => {
 <template>
     <v-row>
         <v-col cols="12" md="12">
-            <UiParentCard :title="t('OCSERV_USERS')" :spacing="false">
+            <UiParentCard :title="t('OCSERV_USERS')">
                 <template #action>
-                    <v-row align="center" justify="space-between" class="my-5 mx-15">
-                        <v-btn
-                            class="me-lg-5"
-                            color="lightprimary"
-                            size="small"
-                            variant="flat"
-                            @click="router.push({ name: 'Ocserv User Sync' })"
-                        >
-                            {{ t('SYNC') }} Ocpasswd
-                        </v-btn>
-                        <v-btn
-                            class="me-lg-2 me-lg-2"
-                            color="grey"
-                            size="small"
-                            variant="flat"
-                            @click="router.push({ name: 'Ocserv User Create' })"
-                        >
-                            {{ t('CREATE') }}
-                        </v-btn>
-                    </v-row>
+                    <v-btn
+                        class="me-lg-5"
+                        color="grey"
+                        size="small"
+                        variant="flat"
+                        @click="router.push({ name: 'Ocserv User Create' })"
+                    >
+                        {{ t('CREATE') }}
+                    </v-btn>
                 </template>
+
 
                 <v-progress-linear :active="loading" indeterminate></v-progress-linear>
 

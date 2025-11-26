@@ -75,7 +75,7 @@ const MainRoutes = {
             name: 'Ocserv User Sync',
             path: '/ocserv/management/users/sync',
             component: () => import('@/views/ocserv_user/OcservUserSync.vue'),
-            props: true
+            props: false
         },
         {
             name: 'OCCTL',

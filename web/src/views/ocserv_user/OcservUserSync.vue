@@ -96,7 +96,7 @@ onMounted(() => {
 
                     <div v-if="!loading && users.length > 0">
                         <v-row align="center" justify="space-between" class="my-3 mx-lg-15">
-                            <v-col cols="auto" class="ma-0 pa-0">
+                            <v-col cols="auto" class="ma-0 pa-0 text-capitalize">
                                 {{ t('SELECTED_USERS') }}: {{ selectedUsers.length }}
                             </v-col>
                             <v-col cols="auto" class="ma-0 pa-0">

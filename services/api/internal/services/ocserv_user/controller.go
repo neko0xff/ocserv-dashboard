@@ -70,9 +70,9 @@ func (ctl *Controller) OcservUsers(c echo.Context) error {
 		}
 
 		for i := range *ocservUsers {
-			user := &(*ocservUsers)[i]
-			if slices.Contains(*onlineUsers, user.Username) {
-				user.IsOnline = true
+			u := &(*ocservUsers)[i]
+			if slices.Contains(*onlineUsers, u.Username) {
+				u.IsOnline = true
 			}
 		}
 	}
@@ -558,7 +558,7 @@ func (ctl *Controller) OcpasswdUsers(c echo.Context) error {
 // @Param        request    body  SyncOcpasswdRequest  true "list of users with config to sync in db"
 // @Failure      400 {object} request.ErrorResponse
 // @Failure      401 {object} middlewares.Unauthorized
-// @Success      200 {object} []models.OcservUser
+// @Success      200 {object} []string
 // @Router       /ocserv/users/ocpasswd/sync [post]
 func (ctl *Controller) SyncToDB(c echo.Context) error {
 	var data SyncOcpasswdRequest
@@ -568,36 +568,55 @@ func (ctl *Controller) SyncToDB(c echo.Context) error {
 
 	expireAt, err := time.Parse("2006-01-02", *data.ExpireAt)
 	if err != nil {
-		return ctl.request.BadRequest(c, err)
+		expireAt, _ = time.Parse("2006-01-02", time.Now().AddDate(0, 0, 30).Format("2006-01-02"))
 	}
 
 	var users []models.OcservUser
-
 	var wg sync.WaitGroup
-	for _, u := range data.users {
+	var mux sync.Mutex
+
+	for _, u := range data.Users {
 		wg.Add(1)
 
 		go func(u user.Ocpasswd) {
 			defer wg.Done()
+
+			group := "defaults"
+			if u.Groups != nil {
+				group = u.Groups[0]
+			}
+
 			newUser := models.OcservUser{
 				Username:    u.Username,
 				Password:    "Secret-Ocpasswd",
-				Group:       u.Groups[0],
+				Group:       group,
 				ExpireAt:    &expireAt,
 				TrafficSize: *data.TrafficSize,
 				TrafficType: *data.TrafficType,
 				Config:      data.Config,
 			}
-			users = append(users, newUser)
-		}(u)
 
+			mux.Lock()
+			users = append(users, newUser)
+			mux.Unlock()
+		}(u)
 	}
 	wg.Wait()
+
+	if len(users) == 0 {
+		return ctl.request.BadRequest(c, errors.New("no users found"))
+	}
 
 	syncUsers, err := ctl.ocservUserRepo.OcpasswdSyncToDB(c.Request().Context(), users)
 	if err != nil {
 		return ctl.request.BadRequest(c, err)
 	}
 
-	return c.JSON(http.StatusOK, syncUsers)
+	var syncUsernames []string
+
+	for _, u := range syncUsers {
+		syncUsernames = append(syncUsernames, u.Username)
+	}
+
+	return c.JSON(http.StatusOK, syncUsernames)
 }

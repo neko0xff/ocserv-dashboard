@@ -850,7 +850,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.OcservUser"
+                                "type": "string"
                             }
                         }
                     },
@@ -2844,6 +2844,9 @@ const docTemplate = `{
         },
         "ocserv_user.SyncOcpasswdRequest": {
             "type": "object",
+            "required": [
+                "users"
+            ],
             "properties": {
                 "config": {
                     "$ref": "#/definitions/models.OcservUserConfig"
@@ -2853,7 +2856,7 @@ const docTemplate = `{
                     "maxLength": 1024,
                     "example": "User for testing VPN access"
                 },
-                "expireAt": {
+                "expire_at": {
                     "type": "string",
                     "example": "2025-12-31"
                 },
@@ -2873,6 +2876,12 @@ const docTemplate = `{
                         "TotallyReceive"
                     ],
                     "example": "MonthlyTransmit"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/user.Ocpasswd"
+                    }
                 }
             }
         },

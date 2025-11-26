@@ -49,8 +49,8 @@ type TotalBandwidthData struct {
 }
 
 type SyncOcpasswdRequest struct {
-	users       []user.Ocpasswd
-	ExpireAt    *string                  `query:"expire_at" validate:"omitempty" example:"2025-12-31"`
+	Users       []user.Ocpasswd          `json:"users" validate:"required"`
+	ExpireAt    *string                  `json:"expire_at" validate:"omitempty" example:"2025-12-31"`
 	TrafficType *string                  `json:"traffic_type" validate:"oneof=Free MonthlyTransmit MonthlyReceive TotallyTransmit TotallyReceive" example:"MonthlyTransmit"`
 	TrafficSize *int                     `json:"traffic_size" validate:"gte=0" example:"10737418240"` // 10 GiB
 	Description *string                  `json:"description" validate:"omitempty,max=1024" example:"User for testing VPN access"`

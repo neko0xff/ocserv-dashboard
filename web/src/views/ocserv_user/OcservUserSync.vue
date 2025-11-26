@@ -2,32 +2,44 @@
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import { useI18n } from 'vue-i18n';
 import UiChildCard from '@/components/shared/UiChildCard.vue';
-import { OcservOcpasswdApi, type UserOcpasswd } from '@/api';
+import { OcservOcpasswdApi, type OcservUserSyncOcpasswdRequest, type UserOcpasswd } from '@/api';
 import { getAuthorization } from '@/utils/request';
 import { computed, onMounted, reactive, ref } from 'vue';
 import Pagination from '@/components/shared/Pagination.vue';
 import type { Meta } from '@/types/metaTypes/MetaType';
+import SaveDBDialog from '@/components/ocserv_user/SaveDBDialog.vue';
+import SyncDBResultDialog from '@/components/ocserv_user/SyncDBResultDialog.vue';
 
 const { t } = useI18n();
 const meta = reactive<Meta>({
     page: 1,
-    size: 25,
+    size: 10,
     sort: 'ASC',
     total_records: 0
 });
 const loading = ref(false);
 const users = reactive<UserOcpasswd[]>([]);
 const selectedUsers = ref<string[]>([]);
+const selectAllUser = ref(false);
+const showDBDialog = ref(false);
+const syncedUsernames = ref<string[]>(['test', 'test2']);
+const showSyncResultDialog = ref(false);
+
+const api = new OcservOcpasswdApi();
 
 const sync = () => {
-    const api = new OcservOcpasswdApi();
     api.ocservUsersOcpasswdGet({
         ...getAuthorization(),
         ...meta
-    }).then((res) => {
-        users.splice(0, users.length, ...(res.data.result ?? []));
-        Object.assign(meta, res.data.meta);
-    });
+    })
+        .then((res) => {
+            users.splice(0, users.length, ...(res.data.result ?? []));
+            Object.assign(meta, res.data.meta);
+        })
+        .finally(() => {
+            selectedUsers.value = [];
+            selectAllUser.value = false;
+        });
 };
 
 function updateMeta(newMeta: Meta) {
@@ -35,20 +47,34 @@ function updateMeta(newMeta: Meta) {
     sync();
 }
 
-
 const toggleSelectAll = (value: boolean) => {
     if (value) {
-        selectedUsers.value = users.map(u => u.username || "");
+        selectedUsers.value = users.map((u) => u.username || '');
     } else {
-        selectedUsers.value = []
+        selectedUsers.value = [];
     }
 };
 
+const saveToDB = (config: OcservUserSyncOcpasswdRequest) => {
+    loading.value = true;
 
-const allSelected = computed(() => {
-    return selectedUsers.value.length === users.length && users.length > 0;
-});
+    config.users = users.filter((u) => u.username && selectedUsers.value.includes(u.username));
 
+    api.ocservUsersOcpasswdSyncPost({
+        ...getAuthorization(),
+        request: config
+    })
+        .then((res) => {
+            syncedUsernames.value = res.data;
+            showDBDialog.value = false;
+            selectedUsers.value = [];
+            showSyncResultDialog.value = true;
+            sync();
+        })
+        .finally(() => {
+            loading.value = false;
+        });
+};
 
 onMounted(() => {
     sync();
@@ -69,8 +95,10 @@ onMounted(() => {
                     <v-progress-linear :active="loading" indeterminate></v-progress-linear>
 
                     <div v-if="!loading && users.length > 0">
-                        <v-row align="center" justify="space-between" class="my-3 mx-15" >
-                            <v-col cols="auto" class="ma-0 pa-0"> selected : {{ selectedUsers.length }} </v-col>
+                        <v-row align="center" justify="space-between" class="my-3 mx-15">
+                            <v-col cols="auto" class="ma-0 pa-0">
+                                {{ t('SELECTED_USERS') }}: {{ selectedUsers.length }}
+                            </v-col>
                             <v-col cols="auto" class="ma-0 pa-0">
                                 <v-btn
                                     :style="{ visibility: !selectedUsers.length ? 'hidden' : 'visible' }"
@@ -78,9 +106,9 @@ onMounted(() => {
                                     color="lightprimary"
                                     size="small"
                                     variant="flat"
-                                    @click="sync"
+                                    @click="showDBDialog = true"
                                 >
-                                    {{ t('SAVE_TO_DATABASE') }}
+                                    {{ t('ASSIGN_CONFIGURATION') }}
                                 </v-btn>
                             </v-col>
                         </v-row>
@@ -92,11 +120,13 @@ onMounted(() => {
                                         <v-row align="center" justify="start">
                                             <v-col cols="auto" class="ma-0 pa-0">
                                                 <v-checkbox
+                                                    v-model="selectAllUser"
                                                     class="text-capitalize text-subtitle-2"
                                                     color="primary"
                                                     hide-details
-                                                    :input-value="allSelected"
-                                                    @update:model-value="(val: unknown) => toggleSelectAll(val as boolean)"
+                                                    @update:model-value="
+                                                        (val: unknown) => toggleSelectAll(val as boolean)
+                                                    "
                                                 />
                                             </v-col>
                                             <v-col cols="auto" class="ma-0 pa-0">
@@ -129,6 +159,7 @@ onMounted(() => {
                                 </tr>
                             </tbody>
                         </v-table>
+
                         <Pagination :meta="meta" @update="updateMeta" />
                     </div>
 
@@ -139,5 +170,8 @@ onMounted(() => {
             </UiParentCard>
         </v-col>
     </v-row>
-</template>
 
+    <SaveDBDialog :show="showDBDialog" @saveToDB="saveToDB" @close="showDBDialog = false" :loading="loading" />
+
+    <SyncDBResultDialog :show="showSyncResultDialog" :usernames="syncedUsernames" @close="showSyncResultDialog = false" />
+</template>

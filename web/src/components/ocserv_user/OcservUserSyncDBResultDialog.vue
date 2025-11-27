@@ -20,7 +20,7 @@ const { t } = useI18n();
     <v-dialog v-model="props.show" max-width="450">
         <v-card>
             <v-card-title class="bg-primary text-capitalize">
-                {{ t('SYNC_DB_RESULT_TITLE_DIALOG') }}
+                {{ t('OCSERV_USER_SYNC_DB_RESULT_TITLE_DIALOG') }}
             </v-card-title>
 
             <v-card-text>

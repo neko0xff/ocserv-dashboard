@@ -70,18 +70,17 @@ const expireAtDate = computed<Date>({
     }
 });
 
-const save = ()=> {
-    emits('saveToDB', config.value)
-    config.value= {
+const save = () => {
+    emits('saveToDB', config.value);
+    config.value = {
         config: {},
         description: '',
         expire_at: '',
         traffic_size: 0,
         traffic_type: OcservUserSyncOcpasswdRequestTrafficTypeEnum.FREE,
         users: []
-    }
-}
-
+    };
+};
 </script>
 
 <template>

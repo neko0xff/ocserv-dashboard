@@ -91,6 +91,17 @@ onMounted(() => {
                     </v-btn>
                 </template>
 
+                <div class="mx-10 text-justify text-muted text-subtitle-1">
+                    {{ t('OCSERV_USER_SYNC_HELP_1') }}
+                    {{ t('OCSERV_USER_SYNC_HELP_2') }}.
+                </div>
+                <div class="mx-10 mb-5 text-justify text-muted text-subtitle-1 mt-2">
+                    <v-icon color="info" size="small" class="me-1 mb-1">mdi-information-outline</v-icon>
+                    <span class="text-capitalize text-info">{{ t('NOTE') }}</span
+                    >:
+                    {{ t('OCSERV_USER_SYNC_HELP_3') }}
+                </div>
+
                 <UiChildCard>
                     <v-progress-linear :active="loading" indeterminate></v-progress-linear>
 

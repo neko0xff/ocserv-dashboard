@@ -172,7 +172,6 @@ onMounted(() => {
                     </v-btn>
                 </template>
 
-
                 <v-progress-linear :active="loading" indeterminate></v-progress-linear>
 
                 <div v-if="!loading && users.length > 0">

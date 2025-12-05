@@ -7,8 +7,8 @@ import { getAuthorization } from '@/utils/request';
 import { onMounted, reactive, ref } from 'vue';
 import Pagination from '@/components/shared/Pagination.vue';
 import type { Meta } from '@/types/metaTypes/MetaType';
-import OcservUserSaveDBDialog from '@/components/ocserv/ocserv_user/OcservUserSaveDBDialog.vue';
-import OcservUserSyncDBResultDialog from '@/components/ocserv/ocserv_user/OcservUserSyncDBResultDialog.vue';
+import OcservUserSaveDBDialog from '@/components/ocserv/sync/ocserv_user/OcservUserSaveDBDialog.vue';
+import OcservUserSyncDBResultDialog from '@/components/ocserv/sync/ocserv_user/OcservUserSyncDBResultDialog.vue';
 
 const { t } = useI18n();
 const meta = reactive<Meta>({
@@ -84,7 +84,7 @@ onMounted(() => {
 <template>
     <v-row>
         <v-col cols="12" md="12">
-            <UiParentCard :title="t('SYNC_PAGE_TITLE')">
+            <UiParentCard :title="t('SYNC_PAGE_TITLE')" variant="plain" :minHeight="650">
                 <template #action>
                     <v-btn class="me-lg-5" color="primary" size="small" variant="flat" @click="sync">
                         {{ t('RELOAD') }}

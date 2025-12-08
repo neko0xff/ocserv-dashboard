@@ -166,8 +166,7 @@ func (c *CornService) ActiveMonthlyUsers(ctx context.Context, db *gorm.DB) {
 	today := time.Now().Truncate(24 * time.Hour)
 
 	err := db.WithContext(ctx).
-		Where("expire_at IS NOT NULL").
-		Where("expire_at > ?", today).
+		Where("(expire_at IS NULL OR expire_at > ?)", today).
 		Where("deactivated_at IS NOT NULL").
 		Where("traffic_type IN ?", []string{
 			models.MonthlyReceive,

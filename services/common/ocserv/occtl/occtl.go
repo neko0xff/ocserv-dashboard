@@ -12,22 +12,38 @@ import (
 
 type OcservOcctl struct{}
 
-type OcservOcctlInterface interface {
+type OcservOcctlUsers interface {
 	OnlineUsers() (*[]string, error)
 	OnlineSessions() (*[]models.OnlineUserSession, error)
-	DisconnectUser(username string) (string, error)
-	ReloadConfigs() (string, error)
-	ShowIPBans() (*[]models.IPBanPoints, error)
-	UnbanIP(ip string) (string, error)
-	ShowStatus(raw bool) (interface{}, error)
-	ShowIRoutes() (*[]models.IRoute, error)
 	ShowUser(username string) (models.OnlineUserSession, error)
-	Version() *models.ServerVersion
 	ShowUserByID(id string) (models.OnlineUserSession, error)
+	DisconnectUser(username string) (string, error)
+}
+
+type OcservOcctlSessions interface {
 	ShowSession(sid string) (map[string]interface{}, error)
 	ShowSessionAll() (*[]interface{}, error)
 	ShowSessionsValid() (*[]interface{}, error)
+}
+
+type OcservOcctlIPBans interface {
+	ShowIPBans() (*[]models.IPBanPoints, error)
+	UnbanIP(ip string) (string, error)
+}
+
+type OcservOcctlServer interface {
+	ShowStatus(raw bool) (interface{}, error)
+	ReloadConfigs() (string, error)
+	ShowIRoutes() (*[]models.IRoute, error)
 	ShowEvent() string
+	Version() *models.ServerVersion
+}
+
+type OcservOcctlInterface interface {
+	OcservOcctlUsers
+	OcservOcctlSessions
+	OcservOcctlIPBans
+	OcservOcctlServer
 }
 
 const occtlExec = "/usr/bin/occtl"

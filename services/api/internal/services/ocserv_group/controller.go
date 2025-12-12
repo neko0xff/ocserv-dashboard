@@ -97,7 +97,7 @@ func (ctl *Controller) OcservGroups(c echo.Context) error {
 			PageSize:     pagination.PageSize,
 			TotalRecords: total,
 		},
-		Result: ocservGroup,
+		Result: &ocservGroup,
 	})
 }
 
@@ -237,7 +237,7 @@ func (ctl *Controller) DeleteOcservGroup(c echo.Context) error {
 			return
 		}
 
-		for _, u := range *users {
+		for _, u := range users {
 			// create local copy for goroutine
 			ocservUser := u
 			ocservUser.Group = "defaults"

@@ -69,8 +69,8 @@ func (ctl *Controller) OcservUsers(c echo.Context) error {
 			return ctl.request.BadRequest(c, err)
 		}
 
-		for i := range *ocservUsers {
-			u := &(*ocservUsers)[i]
+		for i := range ocservUsers {
+			u := &(ocservUsers)[i]
 			if slices.Contains(*onlineUsers, u.Username) {
 				u.IsOnline = true
 			}
@@ -83,7 +83,7 @@ func (ctl *Controller) OcservUsers(c echo.Context) error {
 			TotalRecords: total,
 			PageSize:     pagination.PageSize,
 		},
-		Result: ocservUsers,
+		Result: &ocservUsers,
 	})
 }
 
@@ -390,7 +390,7 @@ func (ctl *Controller) StatisticsOcservUser(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		stats = s
+		stats = &s
 		return nil
 	})
 
@@ -543,7 +543,7 @@ func (ctl *Controller) OcpasswdUsers(c echo.Context) error {
 			TotalRecords: int64(total),
 			PageSize:     pagination.PageSize,
 		},
-		Result: users,
+		Result: &users,
 	})
 }
 

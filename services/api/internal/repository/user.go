@@ -13,16 +13,29 @@ import (
 type UserRepository struct {
 	db *gorm.DB
 }
-type UserRepositoryInterface interface {
+
+type UserCRUD interface {
 	GetByUsername(ctx context.Context, username string) (*models.User, error)
 	GetByUID(ctx context.Context, uid string) (*models.User, error)
-	CreateToken(ctx context.Context, user *models.User, rememberMe bool) (string, error)
 	CreateUser(ctx context.Context, user *models.User) (*models.User, error)
-	Users(ctx context.Context, pagination *request.Pagination) (*[]models.User, int64, error)
-	ChangePassword(ctx context.Context, uid, password, salt string) error
 	DeleteUser(ctx context.Context, uid string) error
+}
+
+type UserAuth interface {
+	CreateToken(ctx context.Context, user *models.User, rememberMe bool) (string, error)
+	ChangePassword(ctx context.Context, uid, password, salt string) error
 	UpdateLastLogin(ctx context.Context, user *models.User) error
+}
+
+type UserQuery interface {
+	Users(ctx context.Context, pagination *request.Pagination) (*[]models.User, int64, error)
 	UsersLookup(ctx context.Context) (*[]models.UsersLookup, error)
+}
+
+type UserRepositoryInterface interface {
+	UserCRUD
+	UserAuth
+	UserQuery
 }
 
 func NewUserRepository() *UserRepository {

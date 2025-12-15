@@ -19,8 +19,8 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./volumes/ocserv:/etc/ocserv
-      - ./volumes/db:/app/db
+      - /opt/ocserv_dashboard/docker_volumes/ocserv:/etc/ocserv
+      - /opt/ocserv_dashboard/docker_volumes/db:/app/db
     ports:
       - ${OCSERV_PORT:-443}:443/tcp
       - ${OCSERV_PORT:-443}:443/udp
@@ -41,7 +41,7 @@ services:
       dockerfile: Dockerfile-Stream-Log
     container_name: log_stream
     volumes:
-      - ./volumes/db:/app/db
+      - /opt/ocserv_dashboard/docker_volumes/db:/app/db
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
       - ./.env
@@ -59,8 +59,8 @@ services:
       dockerfile: Dockerfile-User-Expiry
     container_name: user_expiry
     volumes:
-      - ./volumes/db:/app/db
-      - ./volumes/cron_journal:/app/cron_journal
+      - /opt/ocserv_dashboard/docker_volumes/db:/app/db
+      - /opt/ocserv_dashboard/docker_volumes/cron_journal:/app/cron_journal
     env_file:
       - ./.env
     depends_on:
@@ -77,7 +77,7 @@ services:
         - LANGUAGES=${LANGUAGES}
     container_name: web
     volumes:
-      - ./volumes/nginx/certs:/etc/nginx/certs
+      - /opt/ocserv_dashboard/docker_volumes/nginx/certs:/etc/nginx/certs
     env_file:
       - ./.env
     ports:

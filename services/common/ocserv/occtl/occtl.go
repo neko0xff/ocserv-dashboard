@@ -13,7 +13,7 @@ import (
 type OcservOcctl struct{}
 
 type OcservOcctlUsers interface {
-	OnlineUsers() (*[]string, error)
+	OnlineUsers() ([]string, error)
 	OnlineSessions() (*[]models.OnlineUserSession, error)
 	ShowUser(username string) (models.OnlineUserSession, error)
 	ShowUserByID(id string) (models.OnlineUserSession, error)
@@ -54,7 +54,7 @@ func NewOcservOcctl() *OcservOcctl {
 
 // OnlineUsers returns a list of currently connected usernames.
 // Executes: occtl -j show users | jq -r '.[].Username'
-func (o *OcservOcctl) OnlineUsers() (*[]string, error) {
+func (o *OcservOcctl) OnlineUsers() ([]string, error) {
 	var users []string
 
 	command := "-j show users | jq -r '.[].Username'"
@@ -71,7 +71,7 @@ func (o *OcservOcctl) OnlineUsers() (*[]string, error) {
 		}
 	}
 
-	return &users, nil
+	return users, nil
 }
 
 // OnlineSessions returns a list of currently connected user info.

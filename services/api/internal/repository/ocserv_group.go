@@ -20,8 +20,8 @@ type OcservGroupCRUD interface {
 	Groups(ctx context.Context, pagination *request.Pagination, owner string) ([]models.OcservGroup, int64, error)
 	GroupsLookup(ctx context.Context, owner string) ([]string, error)
 	GetByID(ctx context.Context, id string) (*models.OcservGroup, error)
-	Create(ctx context.Context, group *models.OcservGroup) (*models.OcservGroup, error)
-	Update(ctx context.Context, group *models.OcservGroup) (*models.OcservGroup, error)
+	Create(ctx context.Context, ocservGroup *models.OcservGroup) (*models.OcservGroup, error)
+	Update(ctx context.Context, ocservGroup *models.OcservGroup) (*models.OcservGroup, error)
 	Delete(ctx context.Context, id string) (*models.OcservGroup, error)
 }
 

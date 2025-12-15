@@ -16,7 +16,7 @@ type OcctlServerInfo interface {
 }
 
 type OcctlUserManager interface {
-	OnlineUsers() (*[]string, error)
+	OnlineUsers() ([]string, error)
 	OnlineUsersInfo() (*[]models.OnlineUserSession, error)
 	ShowUserByUsername(username string) (models.OnlineUserSession, error)
 	ShowUserByID(uid string) (models.OnlineUserSession, error)
@@ -55,7 +55,7 @@ func (o *OcctlRepository) Status() (interface{}, error) {
 	return status, nil
 }
 
-func (o *OcctlRepository) OnlineUsers() (*[]string, error) {
+func (o *OcctlRepository) OnlineUsers() ([]string, error) {
 	users, err := o.commonOcservOcctlRepo.OnlineUsers()
 	if err != nil {
 		return nil, err

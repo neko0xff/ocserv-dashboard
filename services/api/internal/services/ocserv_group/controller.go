@@ -97,7 +97,7 @@ func (ctl *Controller) OcservGroups(c echo.Context) error {
 			PageSize:     pagination.PageSize,
 			TotalRecords: total,
 		},
-		Result: &ocservGroup,
+		Result: ocservGroup,
 	})
 }
 

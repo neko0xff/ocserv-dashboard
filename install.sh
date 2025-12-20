@@ -225,7 +225,6 @@ get_ip() {
     printf "\n"
 }
 
-
 # ===============================
 # Function: generate_secret
 # Description:
@@ -235,9 +234,7 @@ get_ip() {
 # ===============================
 generate_secret() {
     local len=64
-    openssl rand -base64 96 \
-        | tr -dc 'A-Za-z0-9!@#%^_+=-.' \
-        | head -c "$len"
+    openssl rand -base64 96 | tr -dc -- '-A-Za-z0-9!@#%^_=+.' | head -c "$len"
 }
 
 # ===============================

@@ -565,7 +565,7 @@ setup_systemd() {
           # Select network interface for NAT/firewall
           get_interface
 
-          export OCSERV_PORT SSL_CN SSL_ORG SSL_EXPIRE OCSERV_DNS ETH OCSERV_BANNER
+          export OCSERV_PORT SSL_CN SSL_ORG SSL_EXPIRE OCSERV_DNS ETH OCSERV_BANNER OCSERV_PRE_LOGIN_BANNER
 
           ./scripts/systemd_ocserv.sh
     fi

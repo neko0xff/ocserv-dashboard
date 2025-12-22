@@ -46,9 +46,6 @@ type OcservUserConfig struct {
 	// Rekey time in seconds; triggers key renegotiation. Example: 86400 for 24 hours
 	RekeyTime *int `json:"rekey-time"`
 
-	// Text message shown to users when they connect to the VPN. Example: 'Welcome to the company VPN!'
-	Banner *string `json:"banner"`
-
 	// Allow user access only to defined routes. Example: true
 	RestrictToRoutes *bool `json:"restrict-to-routes"`
 

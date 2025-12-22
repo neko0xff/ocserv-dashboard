@@ -2651,10 +2651,6 @@ const docTemplate = `{
         "models.OcservUserConfig": {
             "type": "object",
             "properties": {
-                "banner": {
-                    "description": "Text message shown to users when they connect to the VPN. Example: 'Welcome to the company VPN!'",
-                    "type": "string"
-                },
                 "dns": {
                     "description": "Comma-separated list of DNS servers to assign to the user. Example: '8.8.8.8,1.1.1.1'",
                     "type": "array",

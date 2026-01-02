@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github.com/mmtaee/ocserv-users-management/common/models"
+	occtlDocker "github.com/mmtaee/ocserv-users-management/common/occtl_docker"
 	"github.com/mmtaee/ocserv-users-management/common/ocserv/occtl"
 	"github.com/mmtaee/ocserv-users-management/common/ocserv/user"
 	"github.com/mmtaee/ocserv-users-management/common/pkg/database"
@@ -17,13 +18,22 @@ import (
 type CornService struct {
 	occtlHandler      occtl.OcservOcctlInterface
 	ocservUserHandler user.OcservUserInterface
+	occtlDockerRepo   occtlDocker.OcservOcctlUsersDocker
+	dockerMode        bool
 }
 
-func NewCornService() *CornService {
-	return &CornService{
-		occtlHandler:      occtl.NewOcservOcctl(),
-		ocservUserHandler: user.NewOcservUser(),
+func NewCornService(dockerMode bool) *CornService {
+	s := &CornService{
+		dockerMode: dockerMode,
 	}
+
+	if dockerMode {
+		s.occtlDockerRepo = occtlDocker.NewOcservOcctlDocker()
+	} else {
+		s.occtlHandler = occtl.NewOcservOcctl()
+		s.ocservUserHandler = user.NewOcservUser()
+	}
+	return s
 }
 
 func (c *CornService) MissedCron() {
@@ -139,22 +149,30 @@ func (c *CornService) ExpireUsers(ctx context.Context, db *gorm.DB) {
 				"deactivated_at": time.Now(),
 				"is_locked":      true,
 			}).Error; err2 != nil {
-				logger.Error("Failed to update user: %v", err)
+				logger.Error("Failed to update user: %v", err2)
 				return
 			}
 
-			// Disconnect user from ocserv
-			if _, err2 := c.occtlHandler.DisconnectUser(u.Username); err2 != nil {
-				logger.Error("Failed to disconnect user %s: %v", u.Username, err2)
-				return
+			var (
+				disconnect func(string) (string, error)
+				lock       func(string) (string, error)
+			)
+
+			if c.dockerMode {
+				disconnect = c.occtlDockerRepo.DisconnectUser
+				lock = c.occtlDockerRepo.Lock
+			} else {
+				disconnect = c.occtlHandler.DisconnectUser
+				lock = c.ocservUserHandler.Lock
 			}
 
-			// Lock user in ocserv
-			if _, err2 := c.ocservUserHandler.Lock(u.Username); err2 != nil {
-				logger.Error("Failed to lock user %s: %v", u.Username, err2)
-				return
+			if _, err3 := disconnect(u.Username); err3 != nil {
+				logger.Error("Failed to disconnect user %s: %v", u.Username, err)
 			}
-
+			if _, err4 := lock(u.Username); err4 != nil {
+				logger.Error("Failed to lock user %s: %v", u.Username, err4)
+			}
+			return
 		}(u)
 	}
 
@@ -199,7 +217,14 @@ func (c *CornService) ActiveMonthlyUsers(ctx context.Context, db *gorm.DB) {
 				return
 			}
 
-			if _, err2 := c.ocservUserHandler.UnLock(u.Username); err2 != nil {
+			var unlock func(string) (string, error)
+
+			if c.dockerMode {
+				unlock = c.occtlDockerRepo.Unlock
+			} else {
+				unlock = c.ocservUserHandler.UnLock
+			}
+			if _, err2 := unlock(u.Username); err2 != nil {
 				logger.Error("Failed to unlock user %s: %v", u.Username, err2)
 			}
 

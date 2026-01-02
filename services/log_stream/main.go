@@ -18,17 +18,17 @@ import (
 )
 
 var (
-	debug   bool
-	host    string
-	port    int
-	systemd bool
+	debug      bool
+	host       string
+	port       int
+	dockerMode bool
 )
 
 func main() {
 	flag.BoolVar(&debug, "d", false, "debug mode")
 	flag.StringVar(&host, "h", "0.0.0.0", "Server Host")
 	flag.IntVar(&port, "p", 8080, "Server Port")
-	flag.BoolVar(&systemd, "systemd", false, "Systemd Mode")
+	flag.BoolVar(&dockerMode, "docker-mode", false, "Docker Mode")
 	flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -49,7 +49,7 @@ func main() {
 	lineLogChan := make(chan string, 1000)
 	broadcastChan := make(chan string, 1000)
 
-	if systemd {
+	if !dockerMode {
 		logger.Info("Systemd Mode")
 		go func() {
 			if err := readers.SystemdStreamLogs(ctx, service, streamChan); err != nil {
@@ -65,7 +65,7 @@ func main() {
 		}()
 	}
 
-	statService := stats.NewStatService(ctx, lineLogChan)
+	statService := stats.NewStatService(ctx, lineLogChan, dockerMode)
 	go func() {
 		statService.CalculateUserStats()
 	}()

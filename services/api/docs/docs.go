@@ -972,56 +972,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/ocserv/users/restore": {
-            "post": {
-                "description": "Restore expired Ocserv User accounts",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Ocserv(Users)"
-                ],
-                "summary": "Restore expired Ocserv User accounts",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer TOKEN",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "list of ocserv users and expire time",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ocserv_user.ExpiredUsersData"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/request.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/middlewares.Unauthorized"
-                        }
-                    }
-                }
-            }
-        },
         "/ocserv/users/statistics": {
             "get": {
                 "description": "Ocserv Users Statistics",
@@ -1280,6 +1230,63 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.OcservUser"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/request.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/middlewares.Unauthorized"
+                        }
+                    }
+                }
+            }
+        },
+        "/ocserv/users/{uid}/activate": {
+            "post": {
+                "description": "Restore and activate expired Ocserv User accounts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Ocserv(Users)"
+                ],
+                "summary": "Restore and activate expired Ocserv User accounts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer TOKEN",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ocserv User UID",
+                        "name": "uid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "list of ocserv users and expire time",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ocserv_user.ActivateUserData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -2917,6 +2924,15 @@ const docTemplate = `{
                 }
             }
         },
+        "ocserv_user.ActivateUserData": {
+            "type": "object",
+            "properties": {
+                "expire_at": {
+                    "type": "string",
+                    "example": "2025-12-31"
+                }
+            }
+        },
         "ocserv_user.CreateOcservUserData": {
             "type": "object",
             "required": [
@@ -2968,24 +2984,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 32,
                     "minLength": 2
-                }
-            }
-        },
-        "ocserv_user.ExpiredUsersData": {
-            "type": "object",
-            "required": [
-                "users"
-            ],
-            "properties": {
-                "expire_at": {
-                    "type": "string",
-                    "example": "2025-12-31"
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },

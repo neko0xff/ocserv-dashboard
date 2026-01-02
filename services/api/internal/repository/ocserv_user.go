@@ -65,7 +65,7 @@ type OcservUserGroup interface {
 type OcservUserActions interface {
 	Lock(ctx context.Context, uid string) error
 	UnLock(ctx context.Context, uid string) error
-	RestoreExpired(ctx context.Context, users []string, expireAt time.Time) error
+	RestoreExpired(ctx context.Context, uid string, expireAt time.Time) error
 }
 
 type OcservUserRepositoryInterface interface {
@@ -567,19 +567,31 @@ func (o *OcservUserRepository) OcpasswdSyncToDB(ctx context.Context, users []mod
 	return users, nil
 }
 
-func (o *OcservUserRepository) RestoreExpired(ctx context.Context, users []string, expireAt time.Time) error {
-	if len(users) == 0 {
-		return nil
-	}
+func (o *OcservUserRepository) RestoreExpired(ctx context.Context, uid string, expireAt time.Time) error {
+	return o.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var u models.OcservUser
+		if err := tx.
+			Where("uid = ?", uid).
+			First(&u).Error; err != nil {
+			return err
+		}
 
-	return o.db.
-		WithContext(ctx).
-		Model(&models.OcservUser{}).
-		Where("username IN ?", users).
-		Updates(map[string]interface{}{
-			"expire_at":      expireAt,
-			"deactivated_at": nil,
-			"rx":             0,
-			"tx":             0,
-		}).Error
+		if _, err := o.commonOcservUserRepo.UnLock(u.Username); err != nil {
+			return err
+		}
+		
+		if err := tx.
+			Model(&u).
+			Updates(map[string]interface{}{
+				"expire_at":      expireAt,
+				"deactivated_at": nil,
+				"is_locked":      false,
+				"rx":             0,
+				"tx":             0,
+			}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

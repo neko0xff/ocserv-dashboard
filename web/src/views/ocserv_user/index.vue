@@ -11,6 +11,7 @@ import Pagination from '@/components/shared/Pagination.vue';
 import type { Meta } from '@/types/metaTypes/MetaType';
 import { useSnackbarStore } from '@/stores/snackbar';
 import { useProfileStore } from '@/stores/profile';
+import ActivateDialog from '@/components/ocserv_user/ActivateDialog.vue';
 
 const { t } = useI18n();
 const loading = ref(false);
@@ -24,6 +25,10 @@ const meta = reactive<Meta>({
 const deleteDialog = ref(false);
 const deleteUserName = ref('');
 const deleteUserUID = ref('');
+
+const activateDialog = ref(false);
+const activateUserName = ref('');
+const activateUserUID = ref('');
 
 const users = reactive<ModelsOcservUser[]>([]);
 const snackbar = useSnackbarStore();
@@ -117,6 +122,38 @@ const unlock = (uid: string) => {
         });
 };
 
+const activateUser = (expireAt: string) => {
+    expireAt = formatDate(expireAt);
+    api.ocservUsersUidActivatePost({
+        ...getAuthorization(),
+        uid: activateUserUID.value,
+        request: {
+            expire_at: expireAt
+        }
+    })
+        .then(() => {
+            let index = users.findIndex((i) => (i.uid = activateUserUID.value));
+            if (index > -1) {
+                users.splice(index, 1, reactive({
+                    ...users[index],
+                    is_locked: false,
+                    deactivated_at: undefined,
+                    expire_at: expireAt,
+                    is_online: false
+                }));
+            }
+        })
+        .finally(() => {
+            cancelActivateUser();
+            snackbar.show({
+                id: 1,
+                message: t('USER_ACTIVATE_SUCCESSFULLY_SNACK'),
+                color: 'success',
+                timeout: 4000
+            });
+        });
+};
+
 const statistics = async (uid: string, username: string) => {
     await router.push({ name: 'Ocserv User Statistics', params: { uid: uid }, query: { username: username } });
 };
@@ -127,10 +164,22 @@ const deleteUserHandler = (uid: string, name: string) => {
     deleteDialog.value = true;
 };
 
+const activateUserHandler = (uid: string, name: string) => {
+    activateUserUID.value = uid;
+    activateUserName.value = name;
+    activateDialog.value = true;
+};
+
 const cancelDeleteUser = () => {
     deleteUserUID.value = '';
     deleteUserName.value = '';
     deleteDialog.value = false;
+};
+
+const cancelActivateUser = () => {
+    activateUserUID.value = '';
+    activateUserName.value = '';
+    activateDialog.value = false;
 };
 
 const deleteUser = () => {
@@ -257,10 +306,10 @@ onMounted(() => {
                                             {{ formatDate(item.expire_at) }}
                                         </span>
                                     </div>
-                                    <div>
+                                    <div v-if="item.deactivated_at">
                                         {{ t('DEACTIVATED_AT') }}:<br />
                                         <span class="text-info text-capitalize">
-                                            {{ formatDate(item.deactivated_at) || t('USER_IS_ACTIVE_NOW') }}
+                                            {{ formatDate(item.deactivated_at) }}
                                         </span>
                                     </div>
                                 </td>
@@ -268,15 +317,15 @@ onMounted(() => {
                                     <div class="text-capitalize">
                                         {{ t('STATUS') }}:<br />
                                         <!-- Locked -->
-                                        <span v-if="item.is_locked && !item.deactivated_at">
+                                        <span v-if="item.is_locked && !Boolean(item.deactivated_at)">
                                             <v-icon color="warning" start>mdi-lock</v-icon>
                                             <span class="text-warning text-capitalize">{{ t('LOCKED') }}</span>
                                         </span>
 
                                         <!-- Deactivated -->
-                                        <span v-else-if="item.deactivated_at">
-                                            <v-icon color="accent" start>mdi-close-network-outline</v-icon>
-                                            <span class="text-accent text-capitalize">{{ t('DEACTIVATED') }}</span>
+                                        <span v-else-if="Boolean(item.deactivated_at)">
+                                            <v-icon color="error" start>mdi-close-network-outline</v-icon>
+                                            <span class="text-error text-capitalize">{{ t('DEACTIVATED') }}</span>
                                         </span>
 
                                         <!-- Online -->
@@ -287,10 +336,9 @@ onMounted(() => {
 
                                         <!-- Disconnected -->
                                         <span v-else-if="!item.is_online">
-                                            <v-icon color="error" start>mdi-lan-disconnect</v-icon>
-                                            <span class="text-error text-capitalize">{{ t('DISCONNECTED') }}</span>
+                                            <v-icon color="grey" start>mdi-lan-disconnect</v-icon>
+                                            <span class="text-grey text-capitalize">{{ t('DISCONNECTED') }}</span>
                                         </span>
-
                                     </div>
                                 </td>
                                 <td>
@@ -357,6 +405,18 @@ onMounted(() => {
                                                 </template>
                                             </v-list-item>
 
+                                            <v-list-item
+                                                v-if="item.deactivated_at"
+                                                @click="activateUserHandler(item?.uid, item.username)"
+                                            >
+                                                <v-list-item-title class="text-success text-capitalize me-5">
+                                                    {{ t('ACTIVATE') }}
+                                                </v-list-item-title>
+                                                <template v-slot:prepend>
+                                                    <v-icon class="ms-2" color="success">mdi-network-outline</v-icon>
+                                                </template>
+                                            </v-list-item>
+
                                             <v-list-item @click="statistics(item?.uid, item.username)">
                                                 <v-list-item-title class="text-grey text-capitalize me-5">
                                                     {{ t('STATISTICS') }}
@@ -391,6 +451,12 @@ onMounted(() => {
         </v-col>
     </v-row>
 
+    <ActivateDialog
+        :show="activateDialog"
+        :username="activateUserName"
+        @close="cancelActivateUser"
+        @activateUser="activateUser"
+    />
     <DeleteDialog :show="deleteDialog" :username="deleteUserName" @close="cancelDeleteUser" @deleteUser="deleteUser" />
 </template>
 

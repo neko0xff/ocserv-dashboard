@@ -12,10 +12,14 @@ import (
 	"syscall"
 )
 
-var debug bool
+var (
+	debug      bool
+	dockerMode bool
+)
 
 func main() {
 	flag.BoolVar(&debug, "d", false, "debug mode")
+	flag.BoolVar(&dockerMode, "docker-mode", true, "Docker Mode")
 	flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -25,7 +29,7 @@ func main() {
 	config.Init(debug, "", 8888)
 	database.Connect()
 
-	cronService := service.NewCornService()
+	cronService := service.NewCornService(dockerMode)
 
 	logger.Info("Start checking missing cron jobs")
 	cronService.MissedCron()

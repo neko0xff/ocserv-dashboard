@@ -24,6 +24,19 @@ COPY services/api .
 RUN go build -ldflags="-s -w" -o api main.go
 
 # -----------------------------
+# Build Webhook Service
+# -----------------------------
+WORKDIR /webhook
+
+# Copy webhook source
+COPY services/webhook/go.mod services/webhook/go.sum ./
+RUN go mod download
+
+COPY services/webhook .
+
+RUN go build -ldflags="-s -w" -o webhook main.go
+
+# -----------------------------
 # Final Stage
 # -----------------------------
 FROM debian:trixie-slim
@@ -49,14 +62,16 @@ WORKDIR /app
 
 # Copy API binary and scripts
 COPY --from=builder /app/api /usr/local/bin/api
+COPY --from=builder /webhook/webhook /usr/local/bin/webhook
+
 COPY scripts/ocserv_entrypoint.sh /entrypoint.sh
 COPY scripts/ocserv_server.sh /server.sh
 
 # Make binaries and scripts executable
-RUN chmod +x /entrypoint.sh /server.sh /usr/local/bin/api
+RUN chmod +x /entrypoint.sh /server.sh /usr/local/bin/api /usr/local/bin/webhook
 
 # Expose ports
-EXPOSE 443/tcp 443/udp 8080
+EXPOSE 443/tcp 443/udp 8080 8888
 
 # Volumes
 VOLUME ["/etc/ocserv", "/usr/local/bin/db"]

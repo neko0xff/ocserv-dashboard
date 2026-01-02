@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/mmtaee/ocserv-users-management/common/models"
+	occtlDocker "github.com/mmtaee/ocserv-users-management/common/occtl_docker"
 	"github.com/mmtaee/ocserv-users-management/common/ocserv/occtl"
 	"github.com/mmtaee/ocserv-users-management/common/ocserv/user"
 	"github.com/mmtaee/ocserv-users-management/common/pkg/database"
@@ -22,15 +23,25 @@ type StatService struct {
 	stream          <-chan string
 	ocservUserRepo  user.OcservUserInterface
 	ocservOcctlRepo occtl.OcservOcctlInterface
+	occtlDockerRepo occtlDocker.OcservOcctlUsersDocker
+	dockerMode      bool
 }
 
-func NewStatService(ctx context.Context, stream chan string) *StatService {
-	return &StatService{
-		ctx:             ctx,
-		stream:          stream,
-		ocservUserRepo:  user.NewOcservUser(),
-		ocservOcctlRepo: occtl.NewOcservOcctl(),
+func NewStatService(ctx context.Context, stream chan string, dockerMode bool) *StatService {
+	s := &StatService{
+		ctx:        ctx,
+		stream:     stream,
+		dockerMode: dockerMode,
 	}
+
+	if dockerMode {
+		s.occtlDockerRepo = occtlDocker.NewOcservOcctlDocker()
+	} else {
+		s.ocservUserRepo = user.NewOcservUser()
+		s.ocservOcctlRepo = occtl.NewOcservOcctl()
+	}
+
+	return s
 }
 
 func (s *StatService) CalculateUserStats() {
@@ -120,7 +131,13 @@ func (s *StatService) save(ctx context.Context, u UserStats) error {
 
 	now := time.Now()
 	if ocUser.IsLocked {
-		_, err = s.ocservUserRepo.Lock(ocUser.Username)
+		var lockFunc func(username string) (string, error)
+		if s.dockerMode {
+			lockFunc = s.occtlDockerRepo.Lock
+		} else {
+			lockFunc = s.ocservUserRepo.Lock
+		}
+		_, err = lockFunc(ocUser.Username)
 		if err != nil {
 			logger.Error("Error locking user: %v", err)
 		}

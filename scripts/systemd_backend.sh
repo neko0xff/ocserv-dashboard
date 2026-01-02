@@ -110,7 +110,7 @@ for service in "${!SERVICES[@]}"; do
 
   case "$service" in
     api)        ARGS="serve --host 127.0.0.1 --port 8080" ;;
-    log_stream) ARGS="-h 127.0.0.1 -p 8081 --systemd" ;;
+    log_stream) ARGS="-h 127.0.0.1 -p 8081" ;;
     user_expiry) ARGS="" ;;
     *)          ARGS="" ;;
   esac

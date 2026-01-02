@@ -7,7 +7,7 @@ DEBUG=${DEBUG:-0}  # Default to 0 if not set
 # Forward signals to child processes
 # -----------------------------
 # shellcheck disable=SC2064
-trap "echo '[INFO] Caught SIGTERM, stopping...'; kill -TERM \$OCSERV_PID \$API_PID 2>/dev/null" SIGTERM SIGINT
+trap "echo '[INFO] Caught SIGTERM, stopping...'; kill -TERM \$OCSERV_PID \$API_PID \$WEBHOOK_PID 2>/dev/null" SIGTERM SIGINT
 
 # -----------------------------
 # Start API service as non-root user
@@ -19,6 +19,13 @@ else
     api serve &
 fi
 API_PID=$!
+
+# -----------------------------
+# Start Webhook service as non-root user
+# -----------------------------
+echo "[INFO] Starting Webhook service..."
+webhook &
+WEBHOOK_PID=$!
 
 # -----------------------------
 # Start ocserv as root
@@ -33,10 +40,10 @@ OCSERV_PID=$!
 wait -n
 
 # -----------------------------
-# If one process exits, terminate the other
+# If one process exits, terminate the others
 # -----------------------------
 echo "[INFO] One of the processes exited, stopping all services..."
-kill -TERM $OCSERV_PID $API_PID 2>/dev/null || true
+kill -TERM $OCSERV_PID $API_PID $WEBHOOK_PID 2>/dev/null || true
 
 # -----------------------------
 # Wait for all processes to clean up

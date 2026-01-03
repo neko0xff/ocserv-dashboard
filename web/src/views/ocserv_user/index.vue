@@ -86,7 +86,7 @@ const lock = (uid: string) => {
         uid: uid
     })
         .then(() => {
-            let index = users.value.findIndex((i) => i.uid = uid);
+            let index = users.value.findIndex((i) => i.uid === uid);
             if (index > -1) {
                 users.value[index].is_locked = true;
             }
@@ -107,7 +107,7 @@ const unlock = (uid: string) => {
         uid: uid
     })
         .then(() => {
-            let index = users.value.findIndex((i) => i.uid = uid);
+            let index = users.value.findIndex((i) => i.uid === uid);
             if (index > -1) {
                 users.value[index].is_locked = false;
             }
@@ -124,47 +124,31 @@ const unlock = (uid: string) => {
 
 const activateUser = (expireAt: string) => {
     expireAt = formatDate(expireAt);
-
-
-    let index = users.value.findIndex((i) => i.uid = activateUserUID.value);
-    console.log("users.value[index]: ", users.value[index]);
-    console.log("activateUserUID: ", activateUserUID.value);
-    console.log("uid: ",  users.value[index].uid);
-    console.log("username: ",  users.value[index].username);
-
-    users.value.forEach(i => {
-        console.log(i.uid, " ", i.username)
-    });
-
-
-    // api.ocservUsersUidActivatePost({
-    //     ...getAuthorization(),
-    //     uid: activateUserUID.value,
-    //     request: {
-    //         expire_at: expireAt
-    //     }
-    // })
-    //     .then(() => {
-    //         let index = users.value.findIndex((i) => i.uid = activateUserUID.value);
-    //         console.log(index > -1);
-    //         console.log("username: ",  users.value[index].username);
-    //
-    //         if (index > -1) {
-    //             users.value[index].is_locked = false
-    //             users.value[index].deactivated_at = undefined;
-    //             users.value[index].expire_at = expireAt;
-    //             users.value[index].is_online = false
-    //         }
-    //     })
-    //     .finally(() => {
-    //         cancelActivateUser();
-    //         snackbar.show({
-    //             id: 1,
-    //             message: t('USER_ACTIVATE_SUCCESSFULLY_SNACK'),
-    //             color: 'success',
-    //             timeout: 4000
-    //         });
-    //     });
+    api.ocservUsersUidActivatePost({
+        ...getAuthorization(),
+        uid: activateUserUID.value,
+        request: {
+            expire_at: expireAt
+        }
+    })
+        .then(() => {
+            let index = users.value.findIndex((i) => i.uid === activateUserUID.value);
+            if (index > -1) {
+                users.value[index].is_locked = false;
+                users.value[index].deactivated_at = undefined;
+                users.value[index].expire_at = expireAt;
+                users.value[index].is_online = false;
+            }
+        })
+        .finally(() => {
+            cancelActivateUser();
+            snackbar.show({
+                id: 1,
+                message: t('USER_ACTIVATE_SUCCESSFULLY_SNACK'),
+                color: 'success',
+                timeout: 4000
+            });
+        });
 };
 
 const statistics = async (uid: string, username: string) => {
@@ -177,9 +161,8 @@ const deleteUserHandler = (uid: string, username: string) => {
     deleteDialog.value = true;
 };
 
-const activateUserHandler = (uid: string, username: string, item: any) => {
-    console.log("item: ", item);
-    console.log("activateUserHandler", uid, username);
+const activateUserHandler = (uid: string, username: string) => {
+    console.log('activateUserHandler', uid, username);
     activateUserUID.value = uid;
     activateUserName.value = username;
     activateDialog.value = true;
@@ -422,7 +405,7 @@ onMounted(() => {
 
                                             <v-list-item
                                                 v-if="item.deactivated_at"
-                                                @click="activateUserHandler(item?.uid, item.username, item)"
+                                                @click="activateUserHandler(item.uid, item.username)"
                                             >
                                                 <v-list-item-title class="text-success text-capitalize me-5">
                                                     {{ t('ACTIVATE') }}
@@ -432,7 +415,7 @@ onMounted(() => {
                                                 </template>
                                             </v-list-item>
 
-                                            <v-list-item @click="statistics(item?.uid, item.username)">
+                                            <v-list-item @click="statistics(item.uid, item.username)">
                                                 <v-list-item-title class="text-grey text-capitalize me-5">
                                                     {{ t('STATISTICS') }}
                                                 </v-list-item-title>

@@ -169,13 +169,13 @@ onMounted(() => {
                                 </tr>
                             </tbody>
                         </v-table>
-
-                        <Pagination :meta="meta" @update="updateMeta" />
                     </div>
 
                     <div v-else class="ms-md-5 mb-md-5 text-capitalize">
                         {{ t('NO_USER_FOUND_TABLE') }}
                     </div>
+
+                    <Pagination @update="updateMeta" :totalRecords="meta.total_records" />
                 </UiChildCard>
             </UiParentCard>
         </v-col>

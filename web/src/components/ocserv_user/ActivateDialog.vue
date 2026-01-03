@@ -41,7 +41,7 @@ const showDateMenu = ref(false);
                         <v-menu v-model="showDateMenu" :close-on-content-click="false" transition="scale-transition">
                             <template #activator="{ props }">
                                 <v-label class="font-weight-bold mb-1 text-capitalize">
-                                    {{ t('EXPIRE_AT') }}
+                                    {{ t('NEW_EXPIRE_AT') }}
                                 </v-label>
                                 <v-text-field
                                     :model-value="expireAt ? formatDate(expireAt) : ''"

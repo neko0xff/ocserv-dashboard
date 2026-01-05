@@ -8,6 +8,7 @@ import { getAuthorization } from '@/utils/request';
 import DeleteDialog from '@/components/ocserv_group/DeleteDialog.vue';
 import type { Meta } from '@/types/metaTypes/MetaType';
 import { useProfileStore } from '@/stores/profile';
+import Pagination from '@/components/shared/Pagination.vue';
 
 const { t } = useI18n();
 const api = new OcservGroupsApi();
@@ -74,9 +75,10 @@ const deleteGroup = () => {
         });
 };
 
-onMounted(() => {
+const updateMeta = (newMeta: Meta) => {
+    Object.assign(meta, newMeta);
     getGroups();
-});
+};
 </script>
 
 <template>
@@ -151,7 +153,9 @@ onMounted(() => {
                     </tbody>
                 </v-table>
 
-                <div v-else class="ms-md-5 mb-md-5 text-capitalize">{{ t('NO_GROUP_FOUND_TABLE') }}!</div>
+                <div v-else class="ms-md-5 mb-md-5 text-capitalize">{{ t('NO_GROUP_FOUND_TABLE') }}</div>
+
+                <Pagination @update="updateMeta" :totalRecords="meta.total_records" />
             </UiParentCard>
         </v-col>
     </v-row>

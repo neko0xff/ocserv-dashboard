@@ -1,18 +1,34 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import UiChildCard from '@/components/shared/UiChildCard.vue';
 import OcservGroupSync from '@/components/ocserv/sync/ocserv_group/OcservGroupSync.vue';
 import OcservUserSync from '@/components/ocserv/sync/ocserv_user/OcservUserSync.vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const { t } = useI18n();
-const selectedTab = ref(0); // index of active tab
-
+const selectedTab = ref(0);
+const route = useRoute();
+const router = useRouter();
 const tabs = [
     { title: t('GROUPS'), component: OcservGroupSync, color: 'purple' },
     { title: t('USERS'), component: OcservUserSync, color: 'orange' }
 ];
+
+watch(selectedTab, (newIndex) => {
+    router.replace({
+        query: { ...route.query, tab: newIndex.toString() }
+    });
+});
+
+onMounted(() => {
+    const tabParam = route.query.tab;
+    const index = parseInt(tabParam as string, 10);
+    if (!isNaN(index) && index >= 0 && index < tabs.length) {
+        selectedTab.value = index;
+    }
+});
 </script>
 
 <template>
@@ -36,5 +52,3 @@ const tabs = [
         </v-window>
     </UiParentCard>
 </template>
-
-<style scoped></style>

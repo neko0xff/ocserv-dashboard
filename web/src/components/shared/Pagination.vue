@@ -93,7 +93,7 @@ const updateQuery = (params: { page?: number; size?: number; sort?: string }) =>
 </script>
 
 <template>
-    <v-row align="center" class="my-4" justify="center">
+    <v-row align="center" class="my-4" justify="center" v-if="totalRecords > 0">
         <v-col cols="12" lg="2" md="2">
             <v-select
                 v-if="totalRecords > 5"

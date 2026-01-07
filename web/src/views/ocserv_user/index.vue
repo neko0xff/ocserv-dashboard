@@ -15,7 +15,7 @@ import ActivateDialog from '@/components/ocserv_user/ActivateDialog.vue';
 
 const { t } = useI18n();
 const loading = ref(false);
-const q = ref(null)
+const q = ref("")
 const api = new OcservUsersApi();
 const meta = reactive<Meta>({
     page: 1,
@@ -42,7 +42,8 @@ const getUsers = () => {
     loading.value = true;
     api.ocservUsersGet({
         ...getAuthorization(),
-        ...meta
+        ...meta,
+        q: q.value,
     })
         .then((res) => {
             users.value = res.data.result ?? [];
@@ -164,7 +165,6 @@ const deleteUserHandler = (uid: string, username: string) => {
 };
 
 const activateUserHandler = (uid: string, username: string) => {
-    console.log('activateUserHandler', uid, username);
     activateUserUID.value = uid;
     activateUserName.value = username;
     activateDialog.value = true;
@@ -199,6 +199,16 @@ const updateMeta = (newMeta: Meta) => {
     Object.assign(meta, newMeta);
     getUsers();
 };
+
+const search = (clear: boolean = false)=>{
+    if (clear) {
+        q.value = ""
+    }
+    if (q.value.length > 1 || clear) {
+        getUsers()
+    }
+}
+
 </script>
 
 <template>
@@ -219,8 +229,8 @@ const updateMeta = (newMeta: Meta) => {
 
                 <v-progress-linear :active="loading" indeterminate></v-progress-linear>
 
-                <div v-if="!loading && users.length > 0">
-                    <v-row align="start" justify="start" class="px-md-15 mb-3">
+                <div v-if="!loading">
+                    <v-row align="center" justify="start" class="px-md-15 mb-3">
                         <v-col cols="12" md="3" sm="5">
                             <v-text-field
                                 :label="t('USERNAME')"
@@ -229,11 +239,20 @@ const updateMeta = (newMeta: Meta) => {
                                 hide-details
                                 variant="outlined"
                                 clearable
+                                @click:clear="search(true)"
+                                @keyup.enter.native="search(false)"
+                                density="compact"
                             />
+                        </v-col>
+                        <v-col cols="auto">
+                            <v-btn @click="search(false)" color="info" size="small">
+                                <v-icon start>mdi-magnify</v-icon>
+                                {{ t("SEARCH") }}
+                            </v-btn>
                         </v-col>
                     </v-row>
 
-                    <v-table class="px-md-15">
+                    <v-table class="px-md-15" v-if="users.length > 0">
                         <thead>
                             <tr class="text-capitalize bg-lightprimary">
                                 <th class="text-left">{{ t('USERNAME') }}</th>
@@ -451,7 +470,7 @@ const updateMeta = (newMeta: Meta) => {
                     </v-table>
                 </div>
 
-                <div v-else class="ms-md-5 mb-md-5 text-capitalize">
+                <div v-if="loading || users.length == 0" class="ms-md-5 mb-md-5 text-capitalize">
                     {{ t('NO_USER_FOUND_TABLE') }}
                 </div>
 
